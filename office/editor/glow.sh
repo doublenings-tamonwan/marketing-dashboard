@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # แสงฟุ้ง (soft glow / bloom) + โทนอุ่นนิด ๆ สำหรับคลิปแนวตั้ง
-# ใช้: bash office/editor/glow.sh in.mp4 out.mp4 [ความแรง 0.0-1.0, ค่าเริ่มต้น 0.35]
+# ใช้: bash office/editor/glow.sh in.mp4 out.mp4 [ความแรง 0.0-1.0, ค่าเริ่มต้น 0.2 — เจ้าของช่องบอกว่า 0.35 ฟุ้งไป]
 # ใส่ก่อน sparkles.py และ burn_subs.py
 # หมายเหตุ: ต้อง format=gbrp ก่อน blend ไม่งั้นโหมด screen ไปผสมช่องสี U/V ภาพจะติดม่วง
 set -euo pipefail
-IN="$1"; OUT="$2"; S="${3:-0.35}"
+IN="$1"; OUT="$2"; S="${3:-0.2}"
 ffmpeg -nostdin -v error -y -i "$IN" -filter_complex \
 "[0:v]format=gbrp,split[a][b];[b]curves=all='0/0 0.55/0.25 1/1',gblur=sigma=28[g];\
 [a][g]blend=all_mode=screen:all_opacity=${S},\
