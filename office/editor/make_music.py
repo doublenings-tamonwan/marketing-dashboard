@@ -6,7 +6,7 @@
 
 - เสียงดีดแบบอูคูเลเล่ (Karplus-Strong) + เบส + เชคเกอร์เบา ๆ คอร์ด C-G-Am-F
 - --pops: เวลา (วินาที) ที่ใส่เสียง "ป๊อป" น่ารัก ๆ ตอนซับเปลี่ยน
-- --mood: cute (ค่าเริ่มต้น, 112 bpm) | chill (88 bpm, นุ่มกว่า)
+- --mood: cute (ค่าเริ่มต้น, 112 bpm) | chill (84 bpm, เสียงนุ่ม ดีดช้า เสียงป๊อปเบา)
 """
 import argparse
 import wave
@@ -74,7 +74,10 @@ def main():
     a = ap.parse_args()
 
     rng = np.random.default_rng(a.seed)
-    bpm = 112 if a.mood == "cute" else 88
+    bpm = 112 if a.mood == "cute" else 84
+    chord_bright = 0.5 if a.mood == "cute" else 0.25
+    chord_decay = 0.995 if a.mood == "cute" else 0.997
+    pop_gain = 0.22 if a.mood == "cute" else 0.12
     beat = 60 / bpm
     total = a.duration + 1.0
     L = np.zeros(int(total * SR))
@@ -92,7 +95,7 @@ def main():
             notes = CHORDS[ch][::-1] if up else CHORDS[ch]
             for j, m in enumerate(notes):
                 g = (0.16 if not up else 0.11) * (1 - 0.08 * j)
-                sig = pluck(hz(m), 1.2, decay=0.995, rng=rng)
+                sig = pluck(hz(m), 1.6, decay=chord_decay, bright=chord_bright, rng=rng)
                 pan = 0.35 + 0.1 * j
                 add(L, sig, st + j * 0.012, g * (1 - pan))
                 add(R, sig, st + j * 0.012, g * pan)
@@ -114,8 +117,8 @@ def main():
 
     for p in filter(None, a.pops.split(",")):
         s = pop_sfx(rng)
-        add(L, s, float(p), 0.22)
-        add(R, s, float(p), 0.22)
+        add(L, s, float(p), pop_gain)
+        add(R, s, float(p), pop_gain)
 
     n = int(a.duration * SR)
     L, R = L[:n], R[:n]
