@@ -7,7 +7,8 @@
 - ประกายเบา ๆ ลอยระยิบตลอดคลิป (ส่วนบนของจอ = ท้องฟ้า/วิว)
 - --bursts: เวลา (วินาที) ที่มีประกายวิ้งรอบแถบซับ (ใส่เวลาที่ซับเปลี่ยน)
 - --boost: ช่วงเวลาที่ให้วิ้งมากขึ้น เช่น ช็อตเด่น "2-4,11-13"
-- --density: จำนวนประกายพื้นหลังต่อวินาที (ค่าเริ่มต้น 6)
+- --density: จำนวนประกายพื้นหลังต่อวินาที (ค่าเริ่มต้น 2 = เบา ๆ พอดี เจ้าของช่องบอกว่า 6 เยอะไป)
+- --burst-count: จำนวนประกายต่อครั้งที่ซับเปลี่ยน (ค่าเริ่มต้น 3)
 ใส่เอฟเฟกต์ก่อน แล้วค่อยใส่ซับด้วย burn_subs.py (ซับจะอยู่บนสุด)
 """
 import argparse
@@ -59,7 +60,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--bursts", default="")
     ap.add_argument("--boost", default="")
-    ap.add_argument("--density", type=float, default=6.0)
+    ap.add_argument("--density", type=float, default=2.0)
+    ap.add_argument("--burst-count", type=int, default=3, help="จำนวนประกายต่อครั้งที่ซับเปลี่ยน")
     ap.add_argument("--seed", type=int, default=3)
     a = ap.parse_args()
 
@@ -81,7 +83,7 @@ def main():
                        rnd.randrange(len(sprites)), rnd.uniform(-40, 40)))
     for b in filter(None, a.bursts.split(",")):
         b = float(b)
-        for _ in range(7):
+        for _ in range(a.burst_count):
             sparks.append((b + rnd.uniform(0, 0.35), rnd.uniform(0.5, 0.8),
                            rnd.uniform(150, W - 150), rnd.uniform(*SUB_Y),
                            rnd.uniform(70, 140), rnd.randrange(len(sprites)),
