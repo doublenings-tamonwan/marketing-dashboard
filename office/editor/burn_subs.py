@@ -8,6 +8,7 @@
         [--audio music.wav | --mute] [--font Itim-Regular.ttf]
 
 subs.json: [{"start": 0.0, "end": 2.0, "text": "บรรทัดแรก\nบรรทัดที่สอง"}, ...]
+  ใส่ "pos": "top" และ "size": 120 ได้ สำหรับหัวข้อตัวใหญ่ด้านบนจอ (ซ้อนพร้อมซับล่างได้)
 สไตล์ประจำช่อง: ตัวขาว ขอบชมพู เงาชมพูเข้ม ค่อย ๆ ลอยขึ้นตอนเข้า — ห้ามใส่อีโมจิ
 """
 import argparse
@@ -22,6 +23,7 @@ FONT_DIR = os.path.join(os.path.dirname(__file__), "..", "assets", "fonts")
 W, H = 1080, 1920
 SIDE = 70          # ระยะขอบซ้ายขวา
 BOTTOM = 520       # ระยะจากขอบล่าง (เว้นที่ให้ปุ่มของ TikTok)
+TOP = 260          # ระยะจากขอบบน สำหรับหัวข้อ (pos=top)
 WHITE = (255, 255, 255, 255)
 PINK = (255, 105, 180, 255)
 SHADOW = (190, 40, 120, 170)
@@ -70,7 +72,7 @@ def main():
     chain, last = [], "0:v"
     for i, s in enumerate(subs):
         png = os.path.join(tmp, f"s{i}.png")
-        tw, th = render(s["text"], font_path, a.size, png)
+        tw, th = render(s["text"], font_path, s.get("size", a.size), png)
         dur = s["end"] - s["start"]
         cmd += ["-loop", "1", "-t", f"{dur:.3f}", "-i", png]
         st = s["start"]
@@ -79,7 +81,8 @@ def main():
             f"fade=out:st={max(0, dur - 0.1):.3f}:d=0.1:alpha=1,"
             f"setpts=PTS+{st:.3f}/TB[t{i}]"
         )
-        y = f"{H - BOTTOM - th}+max(0\\,(0.18-(t-{st:.3f}))*160)"  # ลอยขึ้นตอนเข้า
+        base_y = TOP if s.get("pos") == "top" else H - BOTTOM - th
+        y = f"{base_y}+max(0\\,(0.18-(t-{st:.3f}))*160)"  # ลอยขึ้นตอนเข้า
         chain.append(
             f"[{last}][t{i}]overlay=x=(W-w)/2:y='{y}':eof_action=pass:eval=frame[v{i}]"
         )
