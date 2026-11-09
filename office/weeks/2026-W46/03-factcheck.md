@@ -5,6 +5,27 @@
 
 ## คลิป 1: ทายซีรีส์จากอีโมจิ — ✏️ ต้องแก้ (แก้ในสคริปต์ให้แล้ว ตอนนี้พร้อมใช้)
 
+### รอบ 2 (หลังเจ้าของช่องขอให้ใช้ซีรีส์เกาหลีที่ดังในไทยเท่านั้น และไม่เอาแนวสืบสวน/ระทึกขวัญ/สยองขวัญ)
+ข้อ 2 เปลี่ยนจากสามชาติสามภพเป็น **Goblin** · ข้อ 4 เปลี่ยนจาก Dead-End Job เป็น **Descendants of the Sun** · ข้อ 1, 3, 5 ใช้ผลตรวจรอบ 1 ด้านล่าง (สามชาติสามภพ / Dead-End Job ในตารางรอบ 1 เลิกใช้แล้ว)
+
+| ประโยค | ผล | หลักฐาน / แหล่ง |
+|---|---|---|
+| ข้อ 2 🗡️ "ดาบที่อก" (Goblin) | ✅ ถูก: คิมชิน แม่ทัพยุคโครยอ ถูกสาปให้เป็นก็อบลินอมตะ มีดาบปักอยู่ในร่าง มีแค่เจ้าสาวที่ดึงดาบออกได้ | [Wikipedia: Goblin (TV series)](https://www.wikipedia.com/wiki/Goblin_(TV_series)) · [The Standard](https://thestandard.co/guardian-the-lonely-and-great-god/) |
+| ข้อ 2 🍁 "ใบเมเปิล" | ✅ ถูก: ฉากดังใน EP.2 ที่ควิเบก อึนทักพยายามรับใบเมเปิลที่กำลังร่วง (ความเชื่อว่าถ้ารับได้ จะได้รักกับคนที่เดินอยู่ด้วย) และใบไม้กลับมาเป็นปมในเรื่องอีกครั้ง | [Soapcentral: 10 scenes](https://charlie-www.soapcentral.com/shows/goblin-10-scenes-kdrama-perfect-we-re-still-rewatching-years-later) · [Korea–Canada 50 years](https://korcan50years.com/2017/03/15/koreality-or-fiction-the-goblin-in-quebec/) |
+| ข้อ 2 👰 "เจ้าสาวก็อบลิน" | ✅ ถูก: จีอึนทัก (คิมโกอึน) คือเจ้าสาวของก็อบลิน | [Wikipedia: Goblin](https://www.wikipedia.com/wiki/Goblin_(TV_series)) |
+| ข้อ 2 ชื่อไทย | ⚠️ ไม่พบชื่อไทยทางการที่ยืนยันได้ (ชื่อที่เคยได้ยิน เช่น "คำสาปรักผู้พิทักษ์วิญญาณ" หาแหล่งยืนยันไม่เจอ) สื่อไทยเรียก "Goblin" → ใช้ "Goblin ก็อบลิน" | [The Standard](https://thestandard.co/?p=366714) |
+| ข้อ 2 "ดังในไทย" / แนวเรื่อง | ✅ ใช้ได้: The Standard (สื่อไทย) ระบุว่าเป็น "กรณีคลาสสิก" ของซีรีส์เกาหลีที่ดังไปทั่วภูมิภาค และเป็นซีรีส์ที่เรตติ้งสูงสุดของ tvN ในยุคนั้น · แนวเรื่องเป็นโรแมนติกแฟนตาซี ไม่ใช่สยองขวัญหรือสืบสวน (มีวิญญาณ/ยมทูต แต่เป็นแนวดราม่า) · หาตัวเลขเรตติ้งในไทยไม่เจอ | [The Standard](https://thestandard.co/?p=366714) · [Gulf News](https://gulfnews.com/entertainment/k-drama-rewind-goblin-gong-yoo-and-lee-dong-wooks-raw-and-grief-soaked-supernatural-series-still-reigns-supreme-1.500448780) |
+| ข้อ 4 🪖🩺💘 "ทหาร · หมอ · ความรัก" (Descendants of the Sun) | ✅ ถูก: ความรักของยูชีจิน (ซงจุงกิ) ร้อยเอกหน่วยรบพิเศษ กับคังโมยอน (ซงฮเยคโย) ศัลยแพทย์ | [Wikipedia: Descendants of the Sun](https://Www.Wikipedia.org/wiki/Descendants_of_the_Sun) |
+| ข้อ 4 ชื่อไทย "ชีวิตเพื่อชาติ รักนี้เพื่อเธอ" | ✅ ถูก: ช่อง 7 ใช้ชื่อนี้ เริ่มฉาย 7 พ.ค. 2559 | [Sanook](https://www.sanook.com/movie/59705/) |
+| ข้อ 4 "ดังในไทย" | ✅ ถูก: เป็นกระแสใหญ่ในไทยปี 2559 ถึงขั้นนายกฯ ในตอนนั้นออกมาชวนให้ดู | [Korea Times](https://www.koreatimes.co.kr/entertainment/shows-dramas/20160318/thai-pm-calls-on-people-to-watch-descendants-of-the-sun?amp=1) · [The Nation](https://www.nationthailand.com/news/30281815) |
+| ตัด "เรื่องใหม่ที่กำลังดัง" | ✅ ตัดแล้ว (Descendants of the Sun เป็นเรื่องปี 2559) เหลือ "ข้อสี่…" | – |
+
+- แก้แล้วใน `02-scripts.md`: แถวข้อ 2 (คำพูด "Goblin ก็อบลิน!", ซับ [Goblin]<br>ก็อบลิน, กราฟิก 🗡️🍁👰 + "ดาบที่อก · ใบเมเปิล · เจ้าสาวก็อบลิน") · แถวข้อ 4 (คำพูด "ข้อสี่…" แล้วเฉลย "Descendants of the Sun ชีวิตเพื่อชาติ รักนี้เพื่อเธอ!", ซับ [ข้อสี่] → [Descendants of the Sun]<br>ชีวิตเพื่อชาติ รักนี้เพื่อเธอ, กราฟิก 🪖🩺💘 + "ทหาร · หมอ · ความรัก") · หมายเหตุคลิป 1
+- ความอ่อนไหว: Descendants of the Sun เคยถูกโยงกับการเมืองไทยปี 2559 (นายกฯ ในตอนนั้นชวนให้ดู และมีคนวิจารณ์ว่าเป็นการเชิดชูทหาร) → **สคริปต์ไม่พูดถึง ห้ามเพิ่มเข้าไป** ทั้งในคลิปและในการตอบคอมเมนต์ ส่วน 🪖 เป็นแค่ป้ายบอกอาชีพตัวละคร ความเสี่ยงต่ำ
+- ลิขสิทธิ์: เหมือนรอบ 1 คือใช้ป้ายตัวหนังสือ ห้ามใช้ภาพฉากใบเมเปิลหรือฉากจริงจากซีรีส์ ห้ามใช้เพลงประกอบ (OST ของ Goblin กับ Descendants of the Sun ดังมาก อย่าเผลอใส่เป็นเพลงพื้นหลัง)
+
+### รอบ 1
+
 | ประโยค | ผล | หลักฐาน / แหล่ง |
 |---|---|---|
 | ข้อ 1 "Full House" + "บ้าน · สัญญา · แต่งงาน" (🏠📝💍) | ✅ ถูก: ฉบับเกาหลี (KBS2 ปี 2004) นางเอกเสียบ้านแล้วทำสัญญาแต่งงานกับดาราที่ซื้อบ้านไป | [Wikipedia: Full House (South Korean TV series)](https://en.wikipedia.org/wiki/Full_House_(South_Korean_TV_series)) · [HanCinema review](https://www.hancinema.net/hancinema-s-drama-review-full-house-61498.html) |
