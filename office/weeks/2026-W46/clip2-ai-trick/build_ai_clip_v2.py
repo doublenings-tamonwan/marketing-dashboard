@@ -12,13 +12,40 @@ from build_ai_clip import (BG, CLEAN, DARK, E, FINAL, FPS, H, PINK, PINK_BG, PIN
                            check_icon, frames, header, label, rounded)
 
 U = "/root/.claude/uploads/4fb0ae1d-39b3-5573-9ed2-8168ea5e1189/"
+INK = (43, 34, 48)
+
+
+def pastel_bg():
+    """พื้นฟ้าพาสเทลลายตาราง (แนวคลิปสอน)"""
+    im = Image.new("RGBA", (W, H), (226, 236, 252, 255))
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    for x in range(0, W, 72):
+        d.rectangle((x, 0, x + 34, H), fill=(255, 255, 255, 70))
+    for y in range(0, H, 72):
+        d.rectangle((0, y, W, y + 34), fill=(255, 255, 255, 70))
+    im.alpha_composite(lay)
+    g = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(g).ellipse((120, 560, 960, 1300), fill=(255, 214, 231, 110))
+    im.alpha_composite(g.filter(ImageFilter.GaussianBlur(120)))
+    return im
+
+
+BG = pastel_bg()
+
+
+def header(im, title, kicker="ทริค AI · EP.1"):
+    d = ImageDraw.Draw(im)
+    q.pill(d, W / 2, 200, kicker, q.F("Prompt-Medium.ttf", 34), bg=(255, 255, 255), fg=PINK_FG)
+    tf = q.fit_font(title, "Prompt-SemiBold.ttf", 82, 980)
+    d.text((W / 2, 296), title, font=tf, fill=INK, anchor="mt")
 CHAT = U + "896998e8-ScreenRecording_11-09-2569_21-33-49_1.mp4"
 VERS = ["moo-yoo-preview.mp4", "moo-yoo-preview-v2.mp4", "moo-yoo-preview-v3.mp4", "moo-yoo-preview-v4-nomusic.mp4",
         "moo-yoo-preview-v5-itim.mp4", "moo-yoo-preview-v6.mp4", "moo-yoo-preview-v7.mp4",
         "moo-yoo-preview-v8-sparkle.mp4", "moo-yoo-preview-v9-glow.mp4", "moo-yoo-preview-v10.mp4",
         "moo-yoo-preview-v11.mp4", "moo-yoo-v12-voice.mp4", "moo-yoo-v13.mp4", "moo-yoo-v14.mp4", "moo-yoo-v15.mp4",
         "moo-yoo-v16-newsubs.mp4"]
-SEG = [("hook", 2.5), ("grid", 2.0), ("chat", 2.0), ("checks", 2.5), ("photo", 2.0), ("versions", 3.0), ("outro", 3.5)]
+SEG = [("hook", 3.0), ("grid", 2.0), ("chat", 2.0), ("checks", 2.5), ("photo", 2.0), ("versions", 3.0), ("outro", 3.5)]
 
 
 def frames_fast(path, ss, dur_src, w, h, n):
@@ -46,10 +73,10 @@ def make_sfx(total):
     k = np.exp(-((tt - 0.12) ** 2) / 0.006)  # วูบขึ้นแล้วหาย
     sweep = np.convolve(noise, np.ones(30) / 30, "same") * k
     s0 = int(0.88 * sr)
-    mix[s0:s0 + n] += 0.5 * sweep / (np.abs(sweep).max() + 1e-9)
+    mix[s0:s0 + n] += 0.0 * sweep  # ไม่ใช้เสียงวูบในแบบคลิปสอน
     tick_t = np.arange(int(0.05 * sr)) / sr
     tick = np.sin(2 * np.pi * 1800 * tick_t) * np.exp(-tick_t * 70)
-    for x in [0.2, 0.4, 0.6, 0.8]:  # ติ๊กตอนตัดสลับฟุตเทจ
+    for x in []:  # (ไม่มีตัดสลับเร็วแล้ว)
         a = int(x * sr)
         mix[a:a + len(tick)] += 0.18 * tick
     pcm = (np.stack([mix, mix], 1) * 32767 * 0.9).astype("<i2")
@@ -70,31 +97,36 @@ def main(out):
     first_raw = raw_full[0]  # ภาพดิบสีจริง ไม่ปรับให้หม่น
     for name, dur in SEG:
         n = int(round(dur * FPS))
-        if name == "hook":  # ตัดสลับฟุตเทจดิบเร็ว ๆ → แฟลช → ซูมกระแทกช็อตสวยสุด + หัวข้อใหญ่
-            raws = [frames(p, 0.6, 0.25, W, H, 6) for p in RAW]
-            best = frames(CLEAN, 0.2, 1.5, W, H)
-            hf1, hf2 = q.F("Prompt-SemiBold.ttf", 58), q.F("Prompt-SemiBold.ttf", 86)
+        if name == "hook":  # ปกบทเรียน: Workflow ตัดคลิปด้วย AI + ก่อน/หลัง (ฉากเดียวกัน)
+            before = frames(RAW[1], 0.4, dur, 340, 604)
+            after = frames(CLEAN, 5.9, 2.1, 340, 604, 78)  # ช็อตตึกขาว 5.9–8.5 (ช็อตจบ 8.58)
+            after += [after[-1]] * (n - len(after))  # ค้างเฟรมสุดท้าย ไม่ให้เลยไปช็อตมือ
+            f_wf = q.F("PlayfairDisplay-Italic.ttf", 120, 600)
+            f_th = q.F("Prompt-SemiBold.ttf", 78)
             for i in range(n):
                 t = i / FPS
-                if t < 1.0:
-                    j = min(4, int(t // 0.2))
-                    im = raws[j][min(5, int((t - j * 0.2) * FPS))].convert("RGBA")
-                    label(im, W / 2, 1440, "ฟุตเทจดิบจากมือถือ", (235, 230, 240), DARK, 44)
-                else:
-                    tt = t - 1.0
-                    fr = best[min(len(best) - 1, int(tt * FPS))]
-                    z = 1.14 - 0.14 * q.ease(tt / 0.35)  # ซูมกระแทก
-                    w2, h2 = int(W * z), int(H * z)
-                    big = fr.resize((w2, h2), Image.LANCZOS)
-                    im = big.crop(((w2 - W) // 2, (h2 - H) // 2, (w2 - W) // 2 + W, (h2 - H) // 2 + H)).convert("RGBA")
-                    if tt < 0.12:  # แฟลช
-                        im.alpha_composite(Image.new("RGBA", (W, H), (255, 255, 255, int(255 * (1 - tt / 0.12)))))
-                    label(im, W / 2, 1440, "AI ตัดแล้ว", PINK_BG, PINK_FG, 44)
-                # กล่องหัวข้อใหญ่ ตลอดช่วงฮุก
-                d = ImageDraw.Draw(im)
-                d.rounded_rectangle((70, 170, 1010, 420), radius=36, fill=DARK)
-                d.text((W / 2, 200), "คลิปมือถือธรรมดา", font=hf1, fill=(255, 255, 255), anchor="mt")
-                d.text((W / 2, 285), "AI ตัดเป็นแบบนี้!", font=hf2, fill=YELLOW, anchor="mt")
+                im = BG.copy()
+                k = q.ease(t / 0.45)
+                lay = Image.new("RGBA", (W, 520), (0, 0, 0, 0))
+                ld = ImageDraw.Draw(lay)
+                q.pill(ld, W / 2, 10, "ทริค AI · EP.1", q.F("Prompt-Medium.ttf", 34), bg=(255, 255, 255), fg=PINK_FG)
+                ld.text((W / 2, 70), "Workflow", font=f_wf, fill=INK, anchor="mt")
+                ld.text((W / 2, 215), "ตัดคลิปด้วย AI", font=f_th, fill=INK, anchor="mt")
+                q.pill(ld, W / 2, 330, "ที่ฉันใช้จริง!", q.F("Prompt-SemiBold.ttf", 42), padx=40, pady=8)
+                q.paste_center(im, lay, W / 2, 190 + 260 + int((1 - k) * 40), 1.0, k)
+                kc = q.ease((t - 0.6) / 0.45)
+                if kc > 0:
+                    off = int((1 - kc) * 120)
+                    q.paste_center(im, rounded(before[i], 28, 6, (200, 190, 210)), W / 2 - 200, 1040 + off, 1.0, kc)
+                    q.paste_center(im, rounded(after[i], 28, 6, PINK), W / 2 + 200, 1040 + off, 1.0, kc)
+                    label(im, W / 2 - 200, 745 + off, "ก่อน", (255, 255, 255), INK, 38)
+                    label(im, W / 2 + 200, 745 + off, "หลัง", PINK_BG, PINK_FG, 38)
+                    ImageDraw.Draw(im).text((W / 2, 1040 + off), "→", font=q.F("Prompt-SemiBold.ttf", 70), fill=INK,
+                                            anchor="mm")
+                if i == 0:
+                    pass
+                if i == n - 1:
+                    globals()["LOOP_FRAME"] = im.convert("RGB")
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "grid":
             tiles = [frames(p, 0.3, dur, 176, 313) for p in RAW]
@@ -171,8 +203,8 @@ def main(out):
             opts = ["เลือกช็อต", "ซับไทย", "แสงฟุ้ง + วิ้ง"]
             for i in range(n):
                 t = i / FPS
-                if t > dur - 0.4:  # 0.4 วิสุดท้าย = เฟรมแรกของคลิป (ดูวนต่อเนียน)
-                    ff.stdin.write(first_raw.convert("RGB").tobytes())
+                if t > dur - 0.4:  # 0.4 วิสุดท้าย = ปกบทเรียน (ดูวนต่อเนียน)
+                    ff.stdin.write(globals()["LOOP_FRAME"].tobytes())
                     continue
                 im = F[i].convert("RGBA")
                 im.alpha_composite(Image.new("RGBA", (W, H), (20, 12, 24, 150)))
