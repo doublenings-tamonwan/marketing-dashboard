@@ -1,0 +1,73 @@
+{
+ "theme": "bold",
+ "kicker": "ซีรีส์ชวนเล่น · EP.1",
+ "title": "ทายซีรีส์จากอีโมจิ",
+ "duration": 26.45,
+ "challenge": {
+  "text": "คอซีรีส์ต้องทายได้!",
+  "until": 3.61
+ },
+ "questions": [
+  {
+   "emoji": "🏠📝💍",
+   "start": 0.0,
+   "countdown": 3.6599999999999997,
+   "reveal": 4.81,
+   "answer": "Full House",
+   "hint": "บ้าน · สัญญา · แต่งงาน",
+   "image": "/root/.claude/uploads/4fb0ae1d-39b3-5573-9ed2-8168ea5e1189/cbd21a78-image.jpg",
+   "image_focus": [
+    0.5,
+    0.55
+   ]
+  },
+  {
+   "emoji": "🗡️🍁👰",
+   "start": 6.0200000000000005,
+   "countdown": 7.08,
+   "reveal": 8.23,
+   "answer": "Goblin",
+   "answer_th": "ก็อบลิน",
+   "hint": "ดาบที่อก · ใบเมเปิล · เจ้าสาวก็อบลิน",
+   "image": "/root/.claude/uploads/4fb0ae1d-39b3-5573-9ed2-8168ea5e1189/b273a3b0-image.jpg",
+   "image_focus": [
+    0.55,
+    0.72
+   ]
+  },
+  {
+   "emoji": "👑😭🏬",
+   "start": 9.44,
+   "countdown": 11.5,
+   "reveal": 12.65,
+   "answer": "Queen of Tears",
+   "answer_th": "ราชินีแห่งน้ำตา",
+   "hint": "ทายาทห้าง · น้ำตา",
+   "image": "/root/.claude/uploads/4fb0ae1d-39b3-5573-9ed2-8168ea5e1189/5e1028a4-image.jpg",
+   "image_focus": [
+    0.5,
+    0.3
+   ]
+  },
+  {
+   "emoji": "🪖🩺💘",
+   "start": 14.21,
+   "countdown": 15.22,
+   "reveal": 16.37,
+   "answer": "Descendants of the Sun",
+   "answer_th": "ชีวิตเพื่อชาติ รักนี้เพื่อเธอ",
+   "hint": "ทหาร · หมอ · ความรัก"
+  },
+  {
+   "emoji": "👑💔➡️💍🤴",
+   "start": 18.229999999999997,
+   "mystery": true
+  }
+ ],
+ "outro": {
+  "start": 21.24,
+  "line1": "ข้อ 5 คือเรื่องอะไร?",
+  "line2": "ได้กี่ข้อ? เมนต์บอกเลย",
+  "follow": "ติดตามไว้ พรุ่งนี้เฉลย!"
+ }
+}

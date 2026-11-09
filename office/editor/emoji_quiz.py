@@ -322,22 +322,26 @@ def main():
         if q.get("hint"):
             lines.append((q["hint"], F("Prompt-Medium.ttf", 34), MUTED))
         answers.append(text_layer(lines))
-    def framed(src):
-        fw, fh = 240, 240
+    def framed(q):
+        """กรอบรูปแนวตั้ง 3:4 (เหมาะกับโปสเตอร์) — "image_focus": [x, y] 0–1 = จุดที่ต้องการให้อยู่กลางกรอบ"""
+        src = q["image"]
+        fw, fh = 216, 288
         if src == "PLACEHOLDER":
             ph = Image.new("RGBA", (fw, fh), (236, 226, 230, 255))
             dd = ImageDraw.Draw(ph)
-            dd.text((fw / 2, fh / 2), "ภาพจากซีรีส์", font=F("Prompt-Medium.ttf", 34), fill=MUTED, anchor="mm")
+            dd.text((fw / 2, fh / 2), "ภาพจากซีรีส์", font=F("Prompt-Medium.ttf", 30), fill=MUTED, anchor="mm")
         else:
             from PIL import ImageOps
-            ph = ImageOps.fit(Image.open(src).convert("RGBA"), (fw, fh), Image.LANCZOS)
+            fx, fy = q.get("image_focus", [0.5, 0.4])
+            ph = ImageOps.fit(Image.open(src).convert("RGBA"), (fw, fh), Image.LANCZOS, centering=(fx, fy))
         mask = Image.new("L", (fw, fh), 0)
-        ImageDraw.Draw(mask).rounded_rectangle((0, 0, fw - 1, fh - 1), radius=28, fill=255)
-        out = Image.new("RGBA", (fw + 16, fh + 16), (0, 0, 0, 0))
-        ImageDraw.Draw(out).rounded_rectangle((0, 0, fw + 15, fh + 15), radius=34, fill=PINK_BG)
-        out.paste(ph, (8, 8), mask)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, fw - 1, fh - 1), radius=24, fill=255)
+        out = Image.new("RGBA", (fw + 20, fh + 20), (0, 0, 0, 0))
+        ImageDraw.Draw(out).rounded_rectangle((0, 0, fw + 19, fh + 19), radius=30,
+                                              fill=DARK if plan.get("theme") == "bold" else PINK_BG)
+        out.paste(ph, (10, 10), mask)
         return out
-    imgs = [framed(q["image"]) if q.get("image") else None for q in qs]
+    imgs = [framed(q) if q.get("image") else None for q in qs]
     qmark = text_layer([("?", F("PlayfairDisplay-Italic.ttf", 180, 700), ACCENT)])
     outro = plan.get("outro")
 
@@ -412,8 +416,8 @@ def main():
         if rev is not None and t >= rev:
             k = ease((t - rev) / 0.22)
             if imgs[qi] is not None:
-                paste_center(im, imgs[qi], W / 2, CARD[0] + 165, 0.8 + 0.2 * k, k)
-                paste_center(im, answers[qi], W / 2, CARD[0] + 435, 0.85 + 0.15 * k, k)
+                paste_center(im, imgs[qi], W / 2, CARD[0] + 172, 0.8 + 0.2 * k, k)
+                paste_center(im, answers[qi], W / 2, CARD[0] + 440, 0.85 + 0.15 * k, k)
             else:
                 paste_center(im, small[qi], W / 2, CARD[0] + 230, 1.0)
                 paste_center(im, answers[qi], W / 2, CARD[0] + 400, 0.85 + 0.15 * k, k)
