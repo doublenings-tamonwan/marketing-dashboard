@@ -64,7 +64,7 @@ def header(im, title, kicker="ทริค AI · EP.1"):
     d = ImageDraw.Draw(im)
     q.pill(d, W / 2, 200, kicker, q.F("Prompt-Medium.ttf", 34))
     tf = q.fit_font(title, "Prompt-SemiBold.ttf", 82, 980)
-    d.text((W / 2, 270), title, font=tf, fill="white", anchor="mt")
+    d.text((W / 2, 296), title, font=tf, fill="white", anchor="mt")
 
 
 def label(im, cx, y, text, bg_=PINK_BG, fg=PINK_FG, size=36):

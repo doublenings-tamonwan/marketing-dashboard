@@ -65,9 +65,9 @@ def main(out):
                     label(im, W / 2, 230, "AI ตัดแล้ว", PINK_BG, PINK_FG, 48)
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "grid":
-            tiles = [frames(p, 0.3, dur, 190, 338) for p in RAW]
+            tiles = [frames(p, 0.3, dur, 176, 313) for p in RAW]
             for ph in ["p8430.jpg", "photo.jpg", "p8260.jpg"]:
-                st = ImageOps.fit(Image.open(E + ph).convert("RGB"), (190, 338), Image.LANCZOS)
+                st = ImageOps.fit(Image.open(E + ph).convert("RGB"), (176, 313), Image.LANCZOS)
                 tiles.append([st] * n)
             for i in range(n):
                 t = i / FPS
@@ -77,16 +77,16 @@ def main(out):
                     r, c = divmod(j, 4)
                     kk = q.ease((t - 0.05 * j) / 0.2)
                     q.paste_center(im, rounded(tl[i], 22, 4, PINK if j >= 5 else (200, 190, 210)),
-                                   195 + c * 230, 590 + r * 360, 0.85 + 0.15 * kk, kk)
+                                   210 + c * 220, 590 + r * 325, 0.85 + 0.15 * kk, kk)
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "chat":  # อัดหน้าจอแชทจริง ในกรอบมือถือ (เร่ง 2.5 เท่า)
-            ch = frames_fast(CHAT, 1.0, 5.0, 380, 826, n)
+            ch = frames_fast(CHAT, 1.0, 5.0, 300, 652, n)
             for i in range(n):
                 t = i / FPS
                 im = BG.copy()
                 header(im, "ส่งไฟล์ในแชท สั่งงานเลย")
                 k = q.ease(t / 0.25)
-                q.paste_center(im, rounded(ch[i], 40, 10, DARK), W / 2, 790, 0.9 + 0.1 * k, k)
+                q.paste_center(im, rounded(ch[i], 40, 10, DARK), W / 2, 765, 0.9 + 0.1 * k, k)
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "checks":
             F = frames(FINAL, 2.2, dur, W, H)
@@ -106,21 +106,21 @@ def main(out):
                     q.pill(ImageDraw.Draw(lay), W / 2 + 30, 10, it, f52, bg=(255, 255, 255), fg=DARK, padx=40, pady=12)
                     tw = ImageDraw.Draw(lay).textlength(it, font=f52)
                     lay.alpha_composite(check_icon(64), (int(W / 2 + 30 - tw / 2 - 40 - 74), 22))
-                    q.paste_center(im, lay, W / 2, 300 + 130 * j, 0.85 + 0.15 * kk, kk)
+                    q.paste_center(im, lay, W / 2, 300 + 150 * j, 0.85 + 0.15 * kk, kk)
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "photo":
-            st = ImageOps.fit(Image.open(E + "photo.jpg").convert("RGB"), (360, 640), Image.LANCZOS, centering=(0.6, 0.45))
-            R = frames(CLEAN, 14.2, 2.0, 360, 640, n)
+            st = ImageOps.fit(Image.open(E + "photo.jpg").convert("RGB"), (340, 604), Image.LANCZOS, centering=(0.6, 0.45))
+            R = frames(CLEAN, 14.2, 2.0, 340, 604, n)
             for i in range(n):
                 im = BG.copy()
                 header(im, "รูปนิ่ง ก็ขยับได้")
-                q.paste_center(im, rounded(ImageEnhance.Color(st).enhance(0.7), border=6, col=(90, 80, 100)), W / 2 - 200, 760)
-                q.paste_center(im, rounded(R[i], border=6, col=PINK), W / 2 + 200, 760)
-                label(im, W / 2 - 200, 400, "รูปนิ่ง", (230, 225, 235), DARK)
-                label(im, W / 2 + 200, 400, "ซูม + แสงฟุ้ง + วิ้ง", PINK_BG, PINK_FG, 32)
+                q.paste_center(im, rounded(ImageEnhance.Color(st).enhance(0.7), border=6, col=(90, 80, 100)), W / 2 - 190, 780)
+                q.paste_center(im, rounded(R[i], border=6, col=PINK), W / 2 + 190, 780)
+                label(im, W / 2 - 190, 450, "รูปนิ่ง", (230, 225, 235), DARK)
+                label(im, W / 2 + 190, 450, "ซูม + แสงฟุ้ง + วิ้ง", PINK_BG, PINK_FG, 32)
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "versions":  # กระพริบ 16 เวอร์ชัน แล้วหยุดที่ v16
-            shots = [frames(E + v, 9.5, 0.1, 400, 711, 1)[0] for v in VERS]
+            shots = [frames(E + v, 9.5, 0.1, 340, 604, 1)[0] for v in VERS]
             flash = 0.11
             for i in range(n):
                 t = i / FPS
@@ -130,9 +130,9 @@ def main(out):
                 col = (120, 200, 140) if j == 15 else (255, 255, 255)
                 bump = 1.06 - 0.06 * q.ease((t - 15 * flash) / 0.25) if j == 15 else 1.0
                 q.paste_center(im, rounded(shots[j], border=6, col=col), W / 2, 780, bump)
-                label(im, W / 2, 400, f"เวอร์ชัน {j + 1}/16", YELLOW if j == 15 else (255, 255, 255), DARK, 40)
+                label(im, W / 2, 424, f"เวอร์ชัน {j + 1}/16", YELLOW if j == 15 else (255, 255, 255), DARK, 40)
                 if j == 15:
-                    q.paste_center(im, check_icon(120), W / 2 + 200, 430 + 70, q.ease((t - 15 * flash) / 0.2))
+                    q.paste_center(im, check_icon(110), W / 2 + 180, 500, q.ease((t - 15 * flash) / 0.2))
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "outro":
             F = [f.filter(ImageFilter.GaussianBlur(22)) for f in frames(FINAL, 11.0, dur, W, H)]

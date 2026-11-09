@@ -50,7 +50,7 @@ def render_clean(text, font_path, size, path):
             break
         size -= 4
     asc, desc = font.getmetrics()
-    lh = int((asc + desc) * 1.12)
+    lh = int((asc + desc) * 1.32)  # ระยะบรรทัดโปร่งขึ้น (เจ้าของช่องบอกว่า 1.12 เบียด)
     pad = 40
     tw = int(max(widths)) + 2 * pad
     th = lh * len(lines) + 2 * pad
@@ -110,6 +110,7 @@ def main():
     ap.add_argument("--subs", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--style", choices=["clean", "cute"], default="clean")
+    ap.add_argument("--bottom", type=int, default=BOTTOM, help="ระยะจากขอบล่างถึงซับ (px) ค่าเริ่มต้น 520")
     ap.add_argument("--font", help="ค่าเริ่มต้น: clean=Prompt-Medium.ttf, cute=Itim-Regular.ttf")
     ap.add_argument("--size", type=int, help="ค่าเริ่มต้น: clean=74, cute=96")
     g = ap.add_mutually_exclusive_group()
@@ -138,7 +139,7 @@ def main():
             f"fade=out:st={max(0, dur - 0.1):.3f}:d=0.1:alpha=1,"
             f"setpts=PTS+{st:.3f}/TB[t{i}]"
         )
-        base_y = TOP if s.get("pos") == "top" else H - BOTTOM - th
+        base_y = TOP if s.get("pos") == "top" else H - a.bottom - th
         y = f"{base_y}+max(0\\,(0.18-(t-{st:.3f}))*160)"  # ลอยขึ้นตอนเข้า
         chain.append(
             f"[{last}][t{i}]overlay=x=(W-w)/2:y='{y}':eof_action=pass:eval=frame[v{i}]"
