@@ -1,4 +1,5 @@
 """ทริค AI EP.1 v2 (ปรับให้แมส): เปิดเต็มจอปาดดิบ→เสร็จ, แชทจริง, กระพริบ 16 เวอร์ชัน, จบวนกลับต้น (~17.5 วิ)"""
+import json
 import math
 import subprocess
 import sys
@@ -79,7 +80,9 @@ VERS = ["moo-yoo-preview.mp4", "moo-yoo-preview-v2.mp4", "moo-yoo-preview-v3.mp4
         "moo-yoo-preview-v8-sparkle.mp4", "moo-yoo-preview-v9-glow.mp4", "moo-yoo-preview-v10.mp4",
         "moo-yoo-preview-v11.mp4", "moo-yoo-v12-voice.mp4", "moo-yoo-v13.mp4", "moo-yoo-v14.mp4", "moo-yoo-v15.mp4",
         "moo-yoo-v16-newsubs.mp4"]
-SEG = [("hook", 3.0), ("grid", 2.0), ("chat", 2.0), ("checks", 2.5), ("photo", 2.0), ("versions", 3.0), ("outro", 3.5)]
+import os as _os
+SEG_DEFAULT = [("hook", 3.0), ("grid", 2.0), ("chat", 2.0), ("checks", 2.5), ("photo", 2.0), ("versions", 3.0), ("outro", 3.5)]
+SEG = [tuple(x) for x in json.load(open("seg_durations.json"))] if _os.path.exists("seg_durations.json") else SEG_DEFAULT
 
 
 def frames_fast(path, ss, dur_src, w, h, n):
