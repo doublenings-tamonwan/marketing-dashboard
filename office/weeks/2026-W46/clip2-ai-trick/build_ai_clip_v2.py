@@ -231,7 +231,7 @@ def main(out):
                 t = i / FPS
                 j = min(15, int(t // flash))
                 im = BG.copy()
-                header(im, "แก้ไป 16 เวอร์ชัน!")
+                header(im, "แก้ไปตั้ง 16 รอบ!")
                 col = (120, 200, 140) if j == 15 else (255, 255, 255)
                 bump = 1.06 - 0.06 * q.ease((t - 15 * flash) / 0.25) if j == 15 else 1.0
                 q.paste_center(im, rounded(shots[j], border=6, col=col), W / 2, 780, bump)
