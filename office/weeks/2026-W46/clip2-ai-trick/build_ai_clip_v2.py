@@ -17,7 +17,7 @@ INK = (43, 34, 48)
 
 def pastel_bg():
     """พื้นฟ้าพาสเทลลายตาราง (แนวคลิปสอน)"""
-    im = Image.new("RGBA", (W, H), (226, 236, 252, 255))
+    im = Image.new("RGBA", (W, H), (251, 228, 236, 255))
     lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
     for x in range(0, W, 72):
@@ -26,12 +26,46 @@ def pastel_bg():
         d.rectangle((0, y, W, y + 34), fill=(255, 255, 255, 70))
     im.alpha_composite(lay)
     g = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(g).ellipse((120, 560, 960, 1300), fill=(255, 214, 231, 110))
+    ImageDraw.Draw(g).ellipse((120, 560, 960, 1300), fill=(255, 255, 255, 120))
     im.alpha_composite(g.filter(ImageFilter.GaussianBlur(120)))
     return im
 
 
 BG = pastel_bg()
+
+
+def make_timeline():
+    """ไทม์ไลน์จากคลิป EP.1 จริง: ภาพย่อ 7 ช็อต + เส้นเสียงพากย์ + แถบซับ"""
+    import wave
+    import numpy as np
+    tw, th = 900, 250
+    tl = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
+    d = ImageDraw.Draw(tl)
+    d.rounded_rectangle((0, 0, tw - 1, th - 1), radius=28, fill=(32, 28, 40))
+    x0, x1 = 30, tw - 30
+    shots = [0, 2.91, 5.82, 8.58, 11.39, 14.15, 16.66, 18.92, 21.5]
+    tot = 21.5
+    sx = lambda t: x0 + (x1 - x0) * t / tot
+    for a, b in zip(shots[:-1], shots[1:]):
+        th_ = frames(FINAL, (a + b) / 2, 0.1, 80, 142, 1)[0]
+        cell = ImageOps.fit(th_, (int(sx(b) - sx(a)) - 4, 70), Image.LANCZOS)
+        tl.paste(cell, (int(sx(a)) + 2, 30))
+    d.rectangle((x0, 108, x1, 128), fill=(60, 52, 70))  # แถบซับ
+    for a, b in [(0.2, 2.6), (2.95, 5.5), (5.9, 8.25), (8.65, 11.1), (11.45, 13.85), (14.2, 16.3), (16.7, 18.6)]:
+        d.rounded_rectangle((sx(a), 110, sx(b) - 3, 126), radius=6, fill=PINK)
+    with wave.open(E + "vo15.wav") as w:
+        a_ = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(float)
+        a_ = a_.reshape(-1, w.getnchannels()).mean(1)
+    seg = len(a_) // (x1 - x0)
+    env = np.array([np.abs(a_[i * seg:(i + 1) * seg]).mean() for i in range(x1 - x0)])
+    env = env / (env.max() or 1)
+    for i, v in enumerate(env):
+        hgt = 4 + 70 * v
+        d.line((x0 + i, 185 - hgt / 2, x0 + i, 185 + hgt / 2), fill=(170, 140, 255))
+    return tl, x0, x1
+
+
+TIMELINE = None
 
 
 def header(im, title, kicker="ทริค AI · EP.1"):
@@ -97,34 +131,41 @@ def main(out):
     first_raw = raw_full[0]  # ภาพดิบสีจริง ไม่ปรับให้หม่น
     for name, dur in SEG:
         n = int(round(dur * FPS))
-        if name == "hook":  # ปกบทเรียน: Workflow ตัดคลิปด้วย AI + ก่อน/หลัง (ฉากเดียวกัน)
-            before = frames(RAW[1], 0.4, dur, 340, 604)
-            after = frames(CLEAN, 5.9, 2.1, 340, 604, 78)  # ช็อตตึกขาว 5.9–8.5 (ช็อตจบ 8.58)
-            after += [after[-1]] * (n - len(after))  # ค้างเฟรมสุดท้าย ไม่ให้เลยไปช็อตมือ
-            f_wf = q.F("PlayfairDisplay-Italic.ttf", 120, 600)
-            f_th = q.F("Prompt-SemiBold.ttf", 78)
+        if name == "hook":  # Edit by AI · Then / Now + ไทม์ไลน์จริงของ EP.1
+            global TIMELINE
+            if TIMELINE is None:
+                TIMELINE = make_timeline()
+            tl_img, tx0, tx1 = TIMELINE
+            before = frames(RAW[1], 0.4, dur, 330, 586)
+            after = frames(CLEAN, 5.9, 2.1, 330, 586, 78)
+            after += [after[-1]] * (n - len(after))
+            f_ed = q.F("PlayfairDisplay-Italic.ttf", 128, 600)
             for i in range(n):
                 t = i / FPS
                 im = BG.copy()
+                d = ImageDraw.Draw(im)
                 k = q.ease(t / 0.45)
-                lay = Image.new("RGBA", (W, 520), (0, 0, 0, 0))
+                lay = Image.new("RGBA", (W, 340), (0, 0, 0, 0))
                 ld = ImageDraw.Draw(lay)
-                q.pill(ld, W / 2, 10, "ทริค AI · EP.1", q.F("Prompt-Medium.ttf", 34), bg=(255, 255, 255), fg=PINK_FG)
-                ld.text((W / 2, 70), "Workflow", font=f_wf, fill=INK, anchor="mt")
-                ld.text((W / 2, 215), "ตัดคลิปด้วย AI", font=f_th, fill=INK, anchor="mt")
-                q.pill(ld, W / 2, 330, "ที่ฉันใช้จริง!", q.F("Prompt-SemiBold.ttf", 42), padx=40, pady=8)
-                q.paste_center(im, lay, W / 2, 190 + 260 + int((1 - k) * 40), 1.0, k)
-                kc = q.ease((t - 0.6) / 0.45)
+                q.pill(ld, W / 2, 6, "ทริค AI · EP.1", q.F("Prompt-Medium.ttf", 34), bg=(255, 255, 255), fg=PINK_FG)
+                ld.text((W / 2, 80), "Edit by AI", font=f_ed, fill=(214, 70, 130), anchor="mt")
+                q.pill(ld, W / 2, 246, "ตัดคลิปเที่ยวจากมือถือ", q.F("Prompt-SemiBold.ttf", 40), bg=(255, 255, 255),
+                       fg=INK, padx=36, pady=8)
+                q.paste_center(im, lay, W / 2, 330 + int((1 - k) * 30), 1.0, k)
+                kc = q.ease((t - 0.45) / 0.45)
                 if kc > 0:
-                    off = int((1 - kc) * 120)
-                    q.paste_center(im, rounded(before[i], 28, 6, (200, 190, 210)), W / 2 - 200, 1040 + off, 1.0, kc)
-                    q.paste_center(im, rounded(after[i], 28, 6, PINK), W / 2 + 200, 1040 + off, 1.0, kc)
-                    label(im, W / 2 - 200, 745 + off, "ก่อน", (255, 255, 255), INK, 38)
-                    label(im, W / 2 + 200, 745 + off, "หลัง", PINK_BG, PINK_FG, 38)
-                    ImageDraw.Draw(im).text((W / 2, 1040 + off), "→", font=q.F("Prompt-SemiBold.ttf", 70), fill=INK,
-                                            anchor="mm")
-                if i == 0:
-                    pass
+                    off = int((1 - kc) * 80)
+                    q.paste_center(im, rounded(before[i], 30, 6, (255, 255, 255)), W / 2 - 190, 890 + off, 1.0, kc)
+                    q.paste_center(im, rounded(after[i], 30, 6, PINK), W / 2 + 190, 890 + off, 1.0, kc)
+                    fl = q.F("PlayfairDisplay-Italic.ttf", 44, 500)
+                    d.text((W / 2 - 190, 545 + off), "Then", font=fl, fill=INK, anchor="mm")
+                    d.text((W / 2 + 190, 545 + off), "Now", font=fl, fill=(214, 70, 130), anchor="mm")
+                kt = q.ease((t - 0.8) / 0.4)
+                if kt > 0:
+                    frame_tl = tl_img.copy()
+                    px = tx0 + (tx1 - tx0) * min(1, max(0, (t - 0.8) / (dur - 0.8)))
+                    ImageDraw.Draw(frame_tl).line((px, 14, px, 236), fill=(255, 255, 255), width=4)
+                    q.paste_center(im, frame_tl, W / 2, 1345 + int((1 - kt) * 60), 1.0, kt)
                 if i == n - 1:
                     globals()["LOOP_FRAME"] = im.convert("RGB")
                 ff.stdin.write(im.convert("RGB").tobytes())
