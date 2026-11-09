@@ -17,7 +17,8 @@ plan.json:
   "outro": {"start": 22.0, "line1": "ได้กี่ข้อ? เมนต์บอก", "line2": "เฉลยพรุ่งนี้ในคอมเมนต์ปักหมุด"}
 }
 - countdown/reveal ไม่ใส่ = ไม่มีนับถอยหลัง/ไม่เฉลย; "mystery": true = โชว์ "?" ตัวใหญ่
-- "theme": "party" = ธีมเกมโชว์ (พื้นม่วง-ชมพู ของลอย พลุกระดาษตอนเฉลย) / "cream" = เรียบ (ค่าเริ่มต้น)
+- "theme": "bold" = ธีมจัดจ้าน (พื้นแดง แสงรัศมีหมุน กล่องหัวข้อเข้ม ตัวเหลือง การ์ดขอบหนา) เห็นแล้วหยุดดู
+  "theme": "party" = ธีมเกมโชว์ (พื้นม่วง-ชมพู ของลอย พลุกระดาษตอนเฉลย) / "cream" = เรียบ (ค่าเริ่มต้น)
 - "image": "path.jpg" (ไม่บังคับ) = ตอนเฉลยโชว์ภาพในกรอบรูปบนการ์ด แทนแถวอีโมจิเล็ก
   ใช้ "PLACEHOLDER" เพื่อดูตำแหน่งก่อนมีภาพจริง — ภาพจากซีรีส์มีลิขสิทธิ์ ใช้เมื่อเจ้าของช่องตัดสินใจเองเท่านั้น
 - ไม่ใส่ --audio = ใส่เสียง "ติ๊ก" ตอนนับ และ "ติ๊ง" ตอนเฉลยให้อัตโนมัติ
@@ -131,6 +132,55 @@ def base_frame_party(plan, qi, n):
     return im
 
 
+YELLOW = (255, 211, 77)
+DARK = (35, 26, 40)
+
+
+def make_rays():
+    size = 2600
+    im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    c = size / 2
+    for k in range(24):
+        a0, a1 = math.radians(k * 15), math.radians(k * 15 + 7.5)
+        d.polygon([(c, c), (c + size * math.cos(a0), c + size * math.sin(a0)),
+                   (c + size * math.cos(a1), c + size * math.sin(a1))], fill=(255, 255, 255, 26))
+    return im
+
+
+def bold_bg(rays, t):
+    top, bot = np.array([214, 40, 52]), np.array([120, 14, 40])
+    grad = (top + (bot - top) * np.linspace(0, 1, H)[:, None]).astype("uint8")
+    im = Image.fromarray(np.repeat(grad[:, None, :], W, axis=1), "RGB").convert("RGBA")
+    r = rays.rotate(t * 6, resample=Image.BILINEAR)
+    cx, cy = W // 2, (CARD[0] + CARD[1]) // 2
+    # แสงรัศมีหมุนรอบกลางการ์ด
+    im.alpha_composite(r.crop((r.width // 2 - cx, r.height // 2 - cy,
+                               r.width // 2 - cx + W, r.height // 2 - cy + H)))
+    return im
+
+
+def overlay_bold(plan, qi, n):
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    # กล่องหัวข้อเข้ม ตัวเหลือง
+    d.rounded_rectangle((70, 196, 1010, 446), radius=40, fill=DARK)
+    d.text((W / 2, 222), plan.get("kicker", ""), font=F("Prompt-Medium.ttf", 34), fill=(255, 255, 255), anchor="mt")
+    d.text((W / 2, 268), plan["title"], font=fit_font(plan["title"], "Prompt-SemiBold.ttf", 104, 860),
+           fill=YELLOW, anchor="mt")
+    # แถบความคืบหน้าเป็นช่อง ๆ
+    seg, gap = 120, 14
+    x0 = W / 2 - (n * seg + (n - 1) * gap) / 2
+    for i in range(n):
+        x = x0 + i * (seg + gap)
+        d.rounded_rectangle((x, 470, x + seg, 488), radius=9,
+                            fill=YELLOW if i <= qi else (255, 255, 255, 90))
+    # การ์ดสไตล์การ์ตูน: เงาทึบ + ขอบหนา
+    d.rounded_rectangle((104, CARD[0] + 18, 1004, CARD[1] + 18), radius=56, fill=DARK)
+    d.rounded_rectangle((90, CARD[0], 990, CARD[1]), radius=56, fill=(255, 250, 240), outline=DARK, width=8)
+    return im
+
+
 def ease(x):
     x = max(0.0, min(1.0, x))
     return 1 - (1 - x) ** 3
@@ -225,7 +275,19 @@ def main():
 
     # เตรียมชิ้นส่วนล่วงหน้า
     party = plan.get("theme") == "party"
-    bases = [(base_frame_party if party else base_frame)(plan, i, n) for i in range(n)]
+    bold = plan.get("theme") == "bold"
+    if bold:
+        rays = make_rays()
+        overlays = [overlay_bold(plan, i, n) for i in range(n)]
+    else:
+        bases = [(base_frame_party if party else base_frame)(plan, i, n) for i in range(n)]
+
+    def get_base(i, t):
+        if bold:
+            b = bold_bg(rays, t)
+            b.alpha_composite(overlays[i])
+            return b
+        return bases[i].copy()
     rnd = random.Random(5)
     decor = []
     if party:
@@ -244,7 +306,7 @@ def main():
         if "reveal" in q_:
             bursts[qi_] = [(rnd.uniform(-1, 1) * 900, rnd.uniform(-1300, -500), rnd.choice(confetti_cols),
                             rnd.uniform(10, 18)) for _ in range(46)]
-    big = [emoji_strip(q["emoji"], 190) for q in qs]
+    big = [emoji_strip(q["emoji"], 230 if plan.get("theme") == "bold" else 190) for q in qs]
     small = [emoji_strip(q["emoji"], 110) for q in qs]
     label_f = F("Prompt-Medium.ttf", 40)
     answers = []
@@ -290,7 +352,7 @@ def main():
     num_fs = {sz: F("Prompt-SemiBold.ttf", sz) for sz in range(60, 92, 4)}
 
     def overlay(im, t, qi, q):
-        if not party:
+        if not (party or bold):
             return
         for sp, x, y0, spd, ph in decor:  # ของลอย: ผ่าน "หลัง" การ์ด
             y = (y0 - spd * t) % (H + 200) - 100
@@ -312,7 +374,7 @@ def main():
     for fi in range(int(round(total * FPS))):
         t = fi / FPS
         if outro and t >= outro["start"]:
-            im = bases[-1].copy()
+            im = get_base(len(qs) - 1, t)
             d = ImageDraw.Draw(im)
             k = ease((t - outro["start"]) / 0.25)
             paste_center(im, small[-1], W / 2, 660, 1.0)
@@ -325,11 +387,15 @@ def main():
             continue
         qi = max(i for i, q in enumerate(qs) if t >= q["start"] or i == 0)
         q = qs[qi]
-        im = bases[qi].copy()
+        im = get_base(qi, t)
         d = ImageDraw.Draw(im)
         rev = q.get("reveal")
         if not (imgs[qi] is not None and rev is not None and t >= rev):
-            pill(d, W / 2, CARD[0] + 40, f"ข้อ {qi + 1}", label_f)
+            if bold:
+                pill(d, W / 2, CARD[0] - 28, f"ข้อ {qi + 1}", F("Prompt-SemiBold.ttf", 46), bg=YELLOW, fg=DARK,
+                     padx=44, pady=8)
+            else:
+                pill(d, W / 2, CARD[0] + 40, f"ข้อ {qi + 1}", label_f)
         if rev is not None and t >= rev:
             k = ease((t - rev) / 0.22)
             if imgs[qi] is not None:
@@ -343,7 +409,7 @@ def main():
             cy = CARD[0] + 230 if q.get("mystery") else CARD[0] + 320
             paste_center(im, big[qi], W / 2, cy, 0.6 + 0.4 * k, k)
             if q.get("mystery"):
-                pulse = 1 + (0.07 * math.sin(t * 6) if party else 0)
+                pulse = 1 + (0.07 * math.sin(t * 6) if (party or bold) else 0)
                 paste_center(im, qmark, W / 2, CARD[0] + 435, (0.7 + 0.3 * k) * pulse, k)
             cd = q.get("countdown")
             if cd is not None and rev is not None and cd <= t < rev:
@@ -354,10 +420,15 @@ def main():
                 if party:  # วงใหญ่ขึ้น เด้งทุกครั้งที่นับ
                     r = 62
                     d.ellipse((cx - r - 6, cy2 - r - 6, cx + r + 6, cy2 + r + 6), fill=(255, 255, 255))
+                if bold:
+                    r = 66
+                    d.ellipse((cx - r - 8, cy2 - r - 8, cx + r + 8, cy2 + r + 8), fill=YELLOW, outline=DARK, width=6)
                 track, numcol = ((255, 214, 231), INK) if party else ((240, 220, 228), INK)
+                if bold:
+                    track = (255, 236, 170)
                 d.ellipse((cx - r, cy2 - r, cx + r, cy2 + r), outline=track, width=10)
                 d.arc((cx - r, cy2 - r, cx + r, cy2 + r), -90, -90 + 360 * (1 - p), fill=ACCENT, width=10)
-                nf = num_fs[min(88, 60 + 4 * int(7 * max(0, 1 - p * 4)))] if party else num_f
+                nf = num_fs[min(88, 60 + 4 * int(7 * max(0, 1 - p * 4)))] if (party or bold) else num_f
                 d.text((cx, cy2), str(max(1, num)), font=nf, fill=numcol, anchor="mm")
         overlay(im, t, qi, q)
         ff.stdin.write(im.convert("RGB").tobytes())
