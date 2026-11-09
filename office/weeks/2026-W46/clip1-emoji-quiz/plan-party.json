@@ -1,0 +1,53 @@
+{
+ "kicker": "ซีรีส์ชวนเล่น · EP.1",
+ "title": "ทายซีรีส์จากอีโมจิ",
+ "duration": 25.0,
+ "questions": [
+  {
+   "emoji": "🏠📝💍",
+   "start": 0.0,
+   "countdown": 2.5,
+   "reveal": 3.7,
+   "answer": "Full House",
+   "hint": "บ้าน · สัญญา · แต่งงาน"
+  },
+  {
+   "emoji": "🗡️🍁👰",
+   "start": 5.0,
+   "countdown": 5.6,
+   "reveal": 7.0,
+   "answer": "Goblin",
+   "answer_th": "ก็อบลิน",
+   "hint": "ดาบที่อก · ใบเมเปิล · เจ้าสาวก็อบลิน"
+  },
+  {
+   "emoji": "👑😭🏬",
+   "start": 9.0,
+   "countdown": 10.2,
+   "reveal": 11.5,
+   "answer": "Queen of Tears",
+   "answer_th": "ราชินีแห่งน้ำตา",
+   "hint": "ทายาทห้าง · น้ำตา"
+  },
+  {
+   "emoji": "🪖🩺💘",
+   "start": 13.0,
+   "countdown": 13.6,
+   "reveal": 15.0,
+   "answer": "Descendants of the Sun",
+   "answer_th": "ชีวิตเพื่อชาติ รักนี้เพื่อเธอ",
+   "hint": "ทหาร · หมอ · ความรัก"
+  },
+  {
+   "emoji": "👑💔➡️💍🤴",
+   "start": 18.0,
+   "mystery": true
+  }
+ ],
+ "outro": {
+  "start": 22.0,
+  "line1": "ได้กี่ข้อ? เมนต์บอก",
+  "line2": "เฉลยพรุ่งนี้ในคอมเมนต์ปักหมุด"
+ },
+ "theme": "party"
+}
