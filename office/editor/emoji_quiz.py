@@ -19,6 +19,8 @@ plan.json:
 - countdown/reveal ไม่ใส่ = ไม่มีนับถอยหลัง/ไม่เฉลย; "mystery": true = โชว์ "?" ตัวใหญ่
 - "theme": "bold" = ธีมจัดจ้าน (พื้นแดง แสงรัศมีหมุน กล่องหัวข้อเข้ม ตัวเหลือง การ์ดขอบหนา) เห็นแล้วหยุดดู
   "theme": "party" = ธีมเกมโชว์ (พื้นม่วง-ชมพู ของลอย พลุกระดาษตอนเฉลย) / "cream" = เรียบ (ค่าเริ่มต้น)
+- "challenge": {"text": "ได้ครบ 5 = สายซีรีส์ตัวจริง!", "until": 2.2} = สติกเกอร์ท้าทายช่วงเปิดคลิป (ฮุก)
+- outro "follow": "ติดตามไว้ พรุ่งนี้เฉลย!" = ปุ่ม "+ ติดตาม" เด้ง ๆ ตอนจบ (เพิ่มยอดติดตาม)
 - "image": "path.jpg" (ไม่บังคับ) = ตอนเฉลยโชว์ภาพในกรอบรูปบนการ์ด แทนแถวอีโมจิเล็ก
   ใช้ "PLACEHOLDER" เพื่อดูตำแหน่งก่อนมีภาพจริง — ภาพจากซีรีส์มีลิขสิทธิ์ ใช้เมื่อเจ้าของช่องตัดสินใจเองเท่านั้น
 - ไม่ใส่ --audio = ใส่เสียง "ติ๊ก" ตอนนับ และ "ติ๊ง" ตอนเฉลยให้อัตโนมัติ
@@ -382,6 +384,17 @@ def main():
                          W / 2, 830, 0.8 + 0.2 * k, k)
             if k > 0.5:
                 pill(d, W / 2, 920, outro["line2"], F("Prompt-Medium.ttf", 38))
+            if outro.get("follow") and t - outro["start"] > 0.35:
+                kk = ease((t - outro["start"] - 0.35) / 0.25)
+                bump = 1 + 0.06 * math.sin((t - outro["start"]) * 7)
+                btn = Image.new("RGBA", (620, 150), (0, 0, 0, 0))
+                bd = ImageDraw.Draw(btn)
+                bd.rounded_rectangle((8, 12, 612, 142), radius=65, fill=DARK)
+                bd.rounded_rectangle((0, 0, 604, 130), radius=65, fill=(254, 44, 85), outline=DARK, width=6)
+                bd.text((302, 65), "+ ติดตาม", font=F("Prompt-SemiBold.ttf", 64), fill="white", anchor="mm")
+                paste_center(im, btn, W / 2, CARD[1] + 120, kk * bump, kk)
+                paste_center(im, text_layer([(outro["follow"], F("Prompt-SemiBold.ttf", 46),
+                                              (255, 255, 255))]), W / 2, CARD[1] + 245, 1.0, kk)
             overlay(im, t, len(qs) - 1, {})
             ff.stdin.write(im.convert("RGB").tobytes())
             continue
@@ -430,6 +443,17 @@ def main():
                 d.arc((cx - r, cy2 - r, cx + r, cy2 + r), -90, -90 + 360 * (1 - p), fill=ACCENT, width=10)
                 nf = num_fs[min(88, 60 + 4 * int(7 * max(0, 1 - p * 4)))] if (party or bold) else num_f
                 d.text((cx, cy2), str(max(1, num)), font=nf, fill=numcol, anchor="mm")
+        ch = plan.get("challenge")
+        if ch and t < ch.get("until", 2.2):
+            kk = ease(t / 0.2)
+            st = Image.new("RGBA", (760, 120), (0, 0, 0, 0))
+            sd = ImageDraw.Draw(st)
+            sd.rounded_rectangle((8, 10, 752, 118), radius=24, fill=DARK)
+            sd.rounded_rectangle((0, 0, 744, 108), radius=24, fill=YELLOW, outline=DARK, width=6)
+            sd.text((372, 54), ch["text"], font=fit_font(ch["text"], "Prompt-SemiBold.ttf", 52, 680),
+                    fill=DARK, anchor="mm")
+            st = st.rotate(-4, resample=Image.BICUBIC, expand=True)
+            paste_center(im, st, W / 2, CARD[0] + 70, (1.3 - 0.3 * kk) * (1 + 0.03 * math.sin(t * 9)), kk)
         overlay(im, t, qi, q)
         ff.stdin.write(im.convert("RGB").tobytes())
     ff.stdin.close()

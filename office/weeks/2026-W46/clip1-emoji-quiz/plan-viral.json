@@ -1,0 +1,15 @@
+{
+ "theme": "bold",
+ "kicker": "ซีรีส์ชวนเล่น · EP.1",
+ "title": "ทายซีรีส์จากอีโมจิ",
+ "duration": 20.0,
+ "challenge": {"text": "ได้ครบ 5 = สายซีรีส์ตัวจริง!", "until": 2.0},
+ "questions": [
+  {"emoji": "🏠📝💍", "start": 0.0, "countdown": 1.9, "reveal": 3.0, "answer": "Full House", "hint": "บ้าน · สัญญา · แต่งงาน"},
+  {"emoji": "🗡️🍁👰", "start": 4.0, "countdown": 4.4, "reveal": 5.6, "answer": "Goblin", "answer_th": "ก็อบลิน", "hint": "ดาบที่อก · ใบเมเปิล · เจ้าสาวก็อบลิน"},
+  {"emoji": "👑😭🏬", "start": 7.0, "countdown": 7.4, "reveal": 8.6, "answer": "Queen of Tears", "answer_th": "ราชินีแห่งน้ำตา", "hint": "ทายาทห้าง · น้ำตา"},
+  {"emoji": "🪖🩺💘", "start": 10.0, "countdown": 10.4, "reveal": 11.6, "answer": "Descendants of the Sun", "answer_th": "ชีวิตเพื่อชาติ รักนี้เพื่อเธอ", "hint": "ทหาร · หมอ · ความรัก"},
+  {"emoji": "👑💔➡️💍🤴", "start": 13.5, "mystery": true}
+ ],
+ "outro": {"start": 16.3, "line1": "ข้อ 5 คือเรื่องอะไร?", "line2": "ได้กี่ข้อ? เมนต์บอกเลย", "follow": "ติดตามไว้ พรุ่งนี้เฉลย!"}
+}
