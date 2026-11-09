@@ -35,34 +35,66 @@ def frames_fast(path, ss, dur_src, w, h, n):
     return out[:n]
 
 
+def make_sfx(total):
+    import wave
+    import numpy as np
+    sr = 48000
+    mix = np.zeros(int(total * sr))
+    n = int(0.45 * sr)
+    tt = np.arange(n) / sr
+    noise = np.random.default_rng(1).normal(0, 1, n)
+    k = np.exp(-((tt - 0.12) ** 2) / 0.006)  # วูบขึ้นแล้วหาย
+    sweep = np.convolve(noise, np.ones(30) / 30, "same") * k
+    s0 = int(0.88 * sr)
+    mix[s0:s0 + n] += 0.5 * sweep / (np.abs(sweep).max() + 1e-9)
+    tick_t = np.arange(int(0.05 * sr)) / sr
+    tick = np.sin(2 * np.pi * 1800 * tick_t) * np.exp(-tick_t * 70)
+    for x in [0.2, 0.4, 0.6, 0.8]:  # ติ๊กตอนตัดสลับฟุตเทจ
+        a = int(x * sr)
+        mix[a:a + len(tick)] += 0.18 * tick
+    pcm = (np.stack([mix, mix], 1) * 32767 * 0.9).astype("<i2")
+    with wave.open("sfx.wav", "wb") as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes(pcm.tobytes())
+
+
 def main(out):
+    make_sfx(sum(d for _, d in SEG))
     ff = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
-                           "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-f", "lavfi", "-i",
-                           "anullsrc=r=48000:cl=stereo", "-c:v", "libx264", "-preset", "medium", "-crf", "19",
+                           "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", "-i", "sfx.wav", "-c:v", "libx264", "-preset", "medium", "-crf", "19",
                            "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", "-movflags", "+faststart", out],
                           stdin=subprocess.PIPE)
-    raw_full = frames(RAW[1], 0.4, 2.5, W, H)  # ตึกขาวดิบ = ฉากเดียวกับช็อตเสร็จ
-    fin_full = frames(CLEAN, 6.2, 2.5, W, H)  # ภาพเสร็จแบบไม่มีซับ (กันซับซ้อน 2 ชั้น)
+    raw_full = frames(RAW[0], 0.6, 0.1, W, H, 1)  # เฟรมแรกของคลิป (ใช้ตอนจบให้วนเนียน)
     first_raw = raw_full[0]  # ภาพดิบสีจริง ไม่ปรับให้หม่น
     for name, dur in SEG:
         n = int(round(dur * FPS))
-        if name == "hook":  # เต็มจอ: ดิบ → ปาด → เสร็จ
+        if name == "hook":  # ตัดสลับฟุตเทจดิบเร็ว ๆ → แฟลช → ซูมกระแทกช็อตสวยสุด + หัวข้อใหญ่
+            raws = [frames(p, 0.6, 0.25, W, H, 6) for p in RAW]
+            best = frames(CLEAN, 0.2, 1.5, W, H)
+            hf1, hf2 = q.F("Prompt-SemiBold.ttf", 58), q.F("Prompt-SemiBold.ttf", 86)
             for i in range(n):
                 t = i / FPS
-                a = raw_full[i]
-                p = q.ease((t - 0.8) / 0.45)  # ปาดซ้าย→ขวา
-                x = int(W * p)
-                im = a.copy()
-                if x > 0:
-                    im.paste(fin_full[i].crop((0, 0, x, H)), (0, 0))
-                im = im.convert("RGBA")
-                d = ImageDraw.Draw(im)
-                if 0 < p < 1:
-                    d.rectangle((x - 6, 0, x + 6, H), fill=(255, 255, 255))
-                if p < 0.5:
-                    label(im, W / 2, 230, "ฟุตเทจดิบ", (235, 230, 240), DARK, 48)
+                if t < 1.0:
+                    j = min(4, int(t // 0.2))
+                    im = raws[j][min(5, int((t - j * 0.2) * FPS))].convert("RGBA")
+                    label(im, W / 2, 1440, "ฟุตเทจดิบจากมือถือ", (235, 230, 240), DARK, 44)
                 else:
-                    label(im, W / 2, 230, "AI ตัดแล้ว", PINK_BG, PINK_FG, 48)
+                    tt = t - 1.0
+                    fr = best[min(len(best) - 1, int(tt * FPS))]
+                    z = 1.14 - 0.14 * q.ease(tt / 0.35)  # ซูมกระแทก
+                    w2, h2 = int(W * z), int(H * z)
+                    big = fr.resize((w2, h2), Image.LANCZOS)
+                    im = big.crop(((w2 - W) // 2, (h2 - H) // 2, (w2 - W) // 2 + W, (h2 - H) // 2 + H)).convert("RGBA")
+                    if tt < 0.12:  # แฟลช
+                        im.alpha_composite(Image.new("RGBA", (W, H), (255, 255, 255, int(255 * (1 - tt / 0.12)))))
+                    label(im, W / 2, 1440, "AI ตัดแล้ว", PINK_BG, PINK_FG, 44)
+                # กล่องหัวข้อใหญ่ ตลอดช่วงฮุก
+                d = ImageDraw.Draw(im)
+                d.rounded_rectangle((70, 170, 1010, 420), radius=36, fill=DARK)
+                d.text((W / 2, 200), "คลิปมือถือธรรมดา", font=hf1, fill=(255, 255, 255), anchor="mt")
+                d.text((W / 2, 285), "AI ตัดเป็นแบบนี้!", font=hf2, fill=YELLOW, anchor="mt")
                 ff.stdin.write(im.convert("RGB").tobytes())
         elif name == "grid":
             tiles = [frames(p, 0.3, dur, 176, 313) for p in RAW]

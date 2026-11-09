@@ -8,7 +8,7 @@
         [--audio music.wav | --mute] [--style clean|cute]
 
 subs.json: [{"start": 0.0, "end": 2.0, "text": "บรรทัดแรก\nบรรทัดที่สอง"}, ...]
-  ใส่ "pos": "top" และ "size": 120 ได้ สำหรับหัวข้อตัวใหญ่ด้านบนจอ (ซ้อนพร้อมซับล่างได้)
+  ใส่ "y": 460 = วางซับที่ระดับนั้นเอง (เช่น หลบหน้าคน) · ใส่ "pos": "top" และ "size": 120 ได้ สำหรับหัวข้อตัวใหญ่ด้านบนจอ (ซ้อนพร้อมซับล่างได้)
 
 สไตล์ประจำช่อง (--style clean, ค่าเริ่มต้น ตั้งแต่ 2026-11-08):
   Prompt Medium ตัวขาว เงาดำนุ่ม; ครอบคำสำคัญด้วย [วงเล็บเหลี่ยม] = แถบป้ายชมพู
@@ -139,7 +139,10 @@ def main():
             f"fade=out:st={max(0, dur - 0.1):.3f}:d=0.1:alpha=1,"
             f"setpts=PTS+{st:.3f}/TB[t{i}]"
         )
-        base_y = TOP if s.get("pos") == "top" else H - a.bottom - th
+        if "y" in s:  # กำหนดตำแหน่งบนเองได้ (px จากขอบบน)
+            base_y = int(s["y"])
+        else:
+            base_y = TOP if s.get("pos") == "top" else H - a.bottom - th
         y = f"{base_y}+max(0\\,(0.18-(t-{st:.3f}))*160)"  # ลอยขึ้นตอนเข้า
         chain.append(
             f"[{last}][t{i}]overlay=x=(W-w)/2:y='{y}':eof_action=pass:eval=frame[v{i}]"
