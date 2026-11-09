@@ -17,6 +17,8 @@ plan.json:
   "outro": {"start": 22.0, "line1": "ได้กี่ข้อ? เมนต์บอก", "line2": "เฉลยพรุ่งนี้ในคอมเมนต์ปักหมุด"}
 }
 - countdown/reveal ไม่ใส่ = ไม่มีนับถอยหลัง/ไม่เฉลย; "mystery": true = โชว์ "?" ตัวใหญ่
+- "image": "path.jpg" (ไม่บังคับ) = ตอนเฉลยโชว์ภาพในกรอบรูปบนการ์ด แทนแถวอีโมจิเล็ก
+  ใช้ "PLACEHOLDER" เพื่อดูตำแหน่งก่อนมีภาพจริง — ภาพจากซีรีส์มีลิขสิทธิ์ ใช้เมื่อเจ้าของช่องตัดสินใจเองเท่านั้น
 - ไม่ใส่ --audio = ใส่เสียง "ติ๊ก" ตอนนับ และ "ติ๊ง" ตอนเฉลยให้อัตโนมัติ
   ใส่ --audio = ผสมเสียงพากย์กับเสียงติ๊ก (พากย์ดังกว่า)
 """
@@ -203,6 +205,22 @@ def main():
         if q.get("hint"):
             lines.append((q["hint"], F("Prompt-Medium.ttf", 34), MUTED))
         answers.append(text_layer(lines))
+    def framed(src):
+        fw, fh = 240, 240
+        if src == "PLACEHOLDER":
+            ph = Image.new("RGBA", (fw, fh), (236, 226, 230, 255))
+            dd = ImageDraw.Draw(ph)
+            dd.text((fw / 2, fh / 2), "ภาพจากซีรีส์", font=F("Prompt-Medium.ttf", 34), fill=MUTED, anchor="mm")
+        else:
+            from PIL import ImageOps
+            ph = ImageOps.fit(Image.open(src).convert("RGBA"), (fw, fh), Image.LANCZOS)
+        mask = Image.new("L", (fw, fh), 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, fw - 1, fh - 1), radius=28, fill=255)
+        out = Image.new("RGBA", (fw + 16, fh + 16), (0, 0, 0, 0))
+        ImageDraw.Draw(out).rounded_rectangle((0, 0, fw + 15, fh + 15), radius=34, fill=PINK_BG)
+        out.paste(ph, (8, 8), mask)
+        return out
+    imgs = [framed(q["image"]) if q.get("image") else None for q in qs]
     qmark = text_layer([("?", F("PlayfairDisplay-Italic.ttf", 180, 700), ACCENT)])
     outro = plan.get("outro")
 
@@ -233,12 +251,17 @@ def main():
         q = qs[qi]
         im = bases[qi].copy()
         d = ImageDraw.Draw(im)
-        pill(d, W / 2, CARD[0] + 40, f"ข้อ {qi + 1}", label_f)
         rev = q.get("reveal")
+        if not (imgs[qi] is not None and rev is not None and t >= rev):
+            pill(d, W / 2, CARD[0] + 40, f"ข้อ {qi + 1}", label_f)
         if rev is not None and t >= rev:
             k = ease((t - rev) / 0.22)
-            paste_center(im, small[qi], W / 2, CARD[0] + 230, 1.0)
-            paste_center(im, answers[qi], W / 2, CARD[0] + 400, 0.85 + 0.15 * k, k)
+            if imgs[qi] is not None:
+                paste_center(im, imgs[qi], W / 2, CARD[0] + 165, 0.8 + 0.2 * k, k)
+                paste_center(im, answers[qi], W / 2, CARD[0] + 435, 0.85 + 0.15 * k, k)
+            else:
+                paste_center(im, small[qi], W / 2, CARD[0] + 230, 1.0)
+                paste_center(im, answers[qi], W / 2, CARD[0] + 400, 0.85 + 0.15 * k, k)
         else:
             k = ease((t - q["start"]) / 0.22)
             cy = CARD[0] + 230 if q.get("mystery") else CARD[0] + 320
