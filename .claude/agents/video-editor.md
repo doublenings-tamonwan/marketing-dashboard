@@ -52,6 +52,12 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 - ไม่ต้องใส่ซับตอนเฉลย (การ์ดโชว์ชื่อเรื่องอยู่แล้ว) — ซับเฉพาะประโยคพูดอื่น
 - มีเสียงพากย์: ปรับเวลา start/countdown/reveal ใน plan ให้ตรงท่อนพูด (หาท่อนจากความดังเหมือนคลิปพากย์)
 
+## สีวิดีโอจาก iPhone (บทเรียน 2026-11-15)
+- เช็กก่อนเสมอ: `ffprobe -show_entries stream=color_transfer,color_primaries` ถ้าเป็น `arib-std-b67` (HLG) หรือ `smpte2084` (PQ) + `bt2020` = ไฟล์ HDR
+- ไฟล์ HDR **ต้องแปลงสีจริง** ก่อนตัด ห้ามแค่เปลี่ยนป้ายสีเป็น bt709 (สีจะซีดเหมือนใส่ฟิลเตอร์ เจ้าของช่องทักแล้ว):
+  `zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=mobius:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p`
+- เจ้าของช่องชอบ **สีจริงตามที่ถ่าย** — ไม่ใส่โทนอุ่น/แสงฟุ้ง เว้นแต่สั่ง
+
 ## หน้าปก
 `python3 office/editor/make_cover.py --photo <รูป/HEIC> --out cover.png --kicker "<ซีรีส์> · EP.N" --title "<หัวข้ออังกฤษ>\n<บรรทัด 2>" --pill "<หัวข้อไทย>" [--footer "<ข้อความเล็กท้ายภาพ>"] [--xc 0.5]`
 หัวข้อภาษาไทยใช้ `--thai-title`; ตรวจครอป 3:4 ตรงกลาง (ที่กริดโปรไฟล์โชว์) ว่าหัวข้อ+แถบป้ายอยู่ครบ
