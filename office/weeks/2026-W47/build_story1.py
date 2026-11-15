@@ -25,11 +25,21 @@ SUBS = [
   ["มี[เรื่องเล่า]ตั้งแต่\nสมัยโชซอนเลยนะ", "ว่ามีคนไปเห็นวาฬ\nที่เพิ่งคลอดลูก", "กินสาหร่ายเข้าไป\n[เต็มท้อง]เลย"],
   ["ทีนี้ วันสอบ\n[ห้ามกิน]เด็ดขาดเลยนะ", "เพราะสาหร่ายมัน[ลื่น]\nใช่ไหม…", "ความรู้ก็จะ\nลื่นหลุดไปด้วย"],
   ["ขนาดคำว่า\n\"กินซุปสาหร่าย\"", "ในภาษาเกาหลี\nเขายังใช้แปลว่า[สอบตก]"],
-  ["เพื่อน ๆ เคยเห็นฉากนี้\nในเรื่องไหนบ้าง", "มา[เมนต์]บอกกันหน่อยน้า", "ตอนหน้ามาเล่า\nเรื่องโซจูต่อ", "อย่าลืม[กดติดตาม]\nน้องนางาจิไว้นะคะ"],
+  ["เพื่อน ๆ เคยเห็นฉากนี้\nในเรื่องไหนบ้าง", "มา[เมนต์]บอกกันหน่อยน้า", "ตอนหน้ามาเล่า\nเรื่องโซจูต่อ", "อย่าลืม[กดติดตาม]ไว้นะคะ"],
 ]
 
+TEMPO = float(os.environ.get("TEMPO", "1.0"))   # 1.08 = พูดเร็วขึ้น 8%
+PITCH = float(os.environ.get("PITCH", "1.0"))   # 1.04 = เสียงสดใสขึ้นเล็กน้อย
+
 def load(n):
-    w = wave.open(f"{WD}/vo{n}.wav"); x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
+    src = f"{WD}/vo{n}.wav"
+    if TEMPO != 1.0 or PITCH != 1.0:  # เร่งจังหวะพูด + ปรับเสียงให้สดใส
+        fast = f"{WD}/vo{n}-t{TEMPO}-p{PITCH}.wav"
+        if not os.path.exists(fast):
+            af = f"asetrate={int(SR * PITCH)},aresample={SR},atempo={TEMPO / PITCH:.4f}"
+            subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", src, "-af", af, "-ar", str(SR), "-ac", "1", fast], check=True)
+        src = fast
+    w = wave.open(src); x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
     return x
 
 def speech_segs(x, a, b):
@@ -53,6 +63,7 @@ def build_audio():
     vos = {n: load(n) for n in (1, 2, 3)}
     pieces = [np.zeros(int(SR * 0.35), np.float32)]; t = 0.35; scenes = []
     for n, a, b in PLAN:
+        a, b = a / TEMPO, b / TEMPO
         x = vos[n]; segs = speech_segs(x, a, b); st = t; talk = []
         for i, (s0, s1) in enumerate(segs):
             s0 -= 0.08; s1 += 0.08
@@ -95,6 +106,29 @@ def build_subs(scenes):
     json.dump(subs, open(f"{WD}/subs.json", "w"), ensure_ascii=False, indent=1)
     return subs
 
+def bell_icon(size=130):
+    S4 = 4; c = size * S4
+    im = Image.new("RGBA", (c, c), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    Y = (255, 205, 70); OUTL = (60, 40, 30)
+    def P(v): return v * c / 100
+    # body
+    d.pieslice([P(22), P(14), P(78), P(70)], 180, 360, fill=Y, outline=OUTL, width=S4 * 4)
+    d.polygon([(P(22), P(42)), (P(78), P(42)), (P(86), P(74)), (P(14), P(74))], fill=Y)
+    d.line([(P(22), P(42)), (P(14), P(74))], fill=OUTL, width=S4 * 4); d.line([(P(78), P(42)), (P(86), P(74))], fill=OUTL, width=S4 * 4)
+    d.rounded_rectangle([P(10), P(70), P(90), P(80)], P(5), fill=Y, outline=OUTL, width=S4 * 4)
+    d.ellipse([P(42), P(78), P(58), P(92)], fill=Y, outline=OUTL, width=S4 * 4)
+    d.ellipse([P(45), P(5), P(55), P(15)], fill=Y, outline=OUTL, width=S4 * 4)
+    d.arc([P(30), P(24), P(50), P(44)], 190, 260, fill=(255, 245, 210), width=S4 * 5)
+    for side in (-1, 1):  # เส้นสั่น
+        for r in (8, 16):
+            x0 = 50 + side * (36 + r)
+            d.arc([P(x0 - r), P(40 - r), P(x0 + r), P(40 + r)], 300 if side > 0 else 120, 60 if side > 0 else 240, fill=(255, 255, 255), width=S4 * 4)
+    im = im.resize((size, size), Image.LANCZOS)
+    a = im.getchannel("A").filter(M.ImageFilter.MaxFilter(9))
+    out = Image.new("RGBA", im.size, (255, 255, 255, 0)); out.putalpha(a); out.alpha_composite(im)
+    return out
+
+
 def render(scenes):
     total = scenes[-1]["end"]; N = int(total * FPS)
     # ความดังเสียงต่อเฟรม -> ขยับปาก
@@ -125,6 +159,8 @@ def render(scenes):
     p = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
                           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
                           f"{WD}/base.mp4"], stdin=subprocess.PIPE)
+    subs = json.load(open(f"{WD}/subs.json")); last = subs[-1]
+    BELL = bell_icon(170)
     si = 0
     for f in range(N):
         t = f / FPS
@@ -150,6 +186,12 @@ def render(scenes):
         bob = int(6 * math.sin(t * 2 * math.pi / 1.6)); hop_in = int(60 * max(0, 1 - lt / 0.2) ** 2)
         frame.alpha_composite(m, (10, H - 190 - m.height + bob + hop_in))
         frame.alpha_composite(doo)
+        if last["start"] <= t:
+            bt = t - last["start"]; sc_ = min(1, bt / 0.15)
+            ang = 18 * math.sin(bt * 2 * math.pi * 3) * math.exp(-bt * 1.2) if bt > 0.15 else 0
+            b = BELL.rotate(ang, resample=Image.BICUBIC, center=(85, 18))
+            if sc_ < 1: b = b.resize((max(1, int(170 * sc_)), max(1, int(170 * sc_))))
+            frame.alpha_composite(b, (540 - b.width // 2, 715 - b.height // 2))
         d = ImageDraw.Draw(frame)
         d.rectangle([0, H - 10, W, H], fill=(60, 72, 120)); d.rectangle([0, H - 10, int(W * t / scenes[-1]["end"]), H], fill=M.YEL)
         p.stdin.write(frame.convert("RGB").tobytes())
