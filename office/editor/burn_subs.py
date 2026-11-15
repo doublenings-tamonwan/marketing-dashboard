@@ -104,6 +104,11 @@ def render_cute(text, font_path, size, path):
     return tw, th
 
 
+def _hex(h):
+    h = h.strip().lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--video", required=True)
@@ -112,11 +117,15 @@ def main():
     ap.add_argument("--style", choices=["clean", "cute"], default="clean")
     ap.add_argument("--bottom", type=int, default=BOTTOM, help="ระยะจากขอบล่างถึงซับ (px) ค่าเริ่มต้น 520")
     ap.add_argument("--font", help="ค่าเริ่มต้น: clean=Prompt-Medium.ttf, cute=Itim-Regular.ttf")
+    ap.add_argument("--pill", help="สีแถบป้ายคำสำคัญ 'พื้น,ตัวอักษร' เช่น FF6363,FFFFFF (ค่าเริ่มต้นชมพู FFD6E7,7A0E3B)")
     ap.add_argument("--size", type=int, help="ค่าเริ่มต้น: clean=74, cute=96")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--audio", help="ไฟล์เสียงที่จะใส่แทนเสียงเดิม")
     g.add_argument("--mute", action="store_true", help="ใส่แทร็กเสียงเงียบ")
     a = ap.parse_args()
+    if a.pill:
+        global PILL_BG, PILL_FG
+        PILL_BG, PILL_FG = (_hex(c) for c in a.pill.split(","))
 
     clean = a.style == "clean"
     a.font = a.font or ("Prompt-Medium.ttf" if clean else "Itim-Regular.ttf")
