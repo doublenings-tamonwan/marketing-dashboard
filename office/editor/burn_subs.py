@@ -8,6 +8,7 @@
         [--audio music.wav | --mute] [--style clean|cute]
 
 subs.json: [{"start": 0.0, "end": 2.0, "text": "บรรทัดแรก\nบรรทัดที่สอง"}, ...]
+  ใส่ "rise": false / "fade_in": 0 / "fade_out": 0 = ไม่ลอย/ไม่จางเข้า-ออก (ทำซับ 2 จังหวะ: ประโยคก่อน แล้วคำสำคัญเด้งตาม)
   ใส่ "y": 460 = วางซับที่ระดับนั้นเอง (เช่น หลบหน้าคน) · ใส่ "pos": "top" และ "size": 120 ได้ สำหรับหัวข้อตัวใหญ่ด้านบนจอ (ซ้อนพร้อมซับล่างได้)
 
 สไตล์ประจำช่อง (--style clean, ค่าเริ่มต้น ตั้งแต่ 2026-11-08):
@@ -134,16 +135,17 @@ def main():
         dur = s["end"] - s["start"]
         cmd += ["-loop", "1", "-t", f"{dur:.3f}", "-i", png]
         st = s["start"]
-        chain.append(
-            f"[{i + 1}:v]format=rgba,fade=in:st=0:d=0.15:alpha=1,"
-            f"fade=out:st={max(0, dur - 0.1):.3f}:d=0.1:alpha=1,"
-            f"setpts=PTS+{st:.3f}/TB[t{i}]"
-        )
+        fi, fo = float(s.get("fade_in", 0.15)), float(s.get("fade_out", 0.1))
+        fades = (f"fade=in:st=0:d={fi}:alpha=1," if fi > 0 else "") + \
+                (f"fade=out:st={max(0, dur - fo):.3f}:d={fo}:alpha=1," if fo > 0 else "")
+        chain.append(f"[{i + 1}:v]format=rgba,{fades}setpts=PTS+{st:.3f}/TB[t{i}]")
         if "y" in s:  # กำหนดตำแหน่งบนเองได้ (px จากขอบบน)
             base_y = int(s["y"])
         else:
             base_y = TOP if s.get("pos") == "top" else H - a.bottom - th
         y = f"{base_y}+max(0\\,(0.18-(t-{st:.3f}))*160)"  # ลอยขึ้นตอนเข้า
+        if s.get("rise") is False:  # ไม่ลอย (ใช้กับซับท่อนต่อที่ต้องอยู่ตำแหน่งเดิม)
+            y = str(base_y)
         chain.append(
             f"[{last}][t{i}]overlay=x=(W-w)/2:y='{y}':eof_action=pass:eval=frame[v{i}]"
         )
