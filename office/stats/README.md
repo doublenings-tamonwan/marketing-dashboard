@@ -5,9 +5,10 @@ office/stats/
 ├── README.md              ← ไฟล์นี้ (อธิบายว่าอะไรอยู่ตรงไหน)
 ├── tracker.md             ← สมุดสถิติหลัก: ความคืบหน้าเป้า 1,000 · ผู้ติดตาม · ภาพรวมรายวัน · ยอดรายคลิป
 ├── import_export.py       ← สคริปต์นำไฟล์ export จาก TikTok Studio เข้าแฟ้ม
-├── data/                  ← ตัวเลขดิบแบบตาราง (CSV เปิดใน Excel/Google Sheets ได้)
+├── data/                  ← ตัวเลขดิบแบบตาราง (CSV เปิดใน Excel/Google Sheets ได้) — แดชบอร์ด: https://claude.ai/artifact/5K9dHW3htbMXStyCiJQPbG
 │   ├── daily-overview.csv ← ภาพรวมช่องรายวัน (วิว เข้าโปรไฟล์ ไลก์ คอมเมนต์ แชร์) วันละ 1 แถว
-│   └── followers.csv      ← บันทึกผู้ติดตามทุกครั้งที่ได้ภาพหน้าโปรไฟล์
+│   ├── followers.csv      ← บันทึกผู้ติดตามทุกครั้งที่ได้ภาพหน้าโปรไฟล์
+│   └── clips.csv          ← ยอดรายคลิป
 ├── weekly/                ← สรุปรายสัปดาห์ (ให้ performance-analyst อ่าน)
 │   └── 2026-W46.md
 ├── raw/                   ← ไฟล์ต้นฉบับ ห้ามแก้
@@ -34,3 +35,6 @@ python3 office/stats/import_export.py <ไฟล์.zip>
 ## กติกา
 - ห้ามเดาตัวเลข ถ้าไม่มีข้อมูลให้เขียน "–" หรือ "ยังไม่ยืนยัน"
 - ไฟล์ใน `raw/` และ `screenshots/` ห้ามแก้หรือลบ ใช้เป็นหลักฐานย้อนหลัง
+
+## แดชบอร์ด
+https://claude.ai/artifact/5K9dHW3htbMXStyCiJQPbG — ดึงตัวเลขจากไฟล์ใน `data/` ทุกครั้งที่อัปเดต CSV ต้องอัปโหลดไฟล์ใหม่เข้าแดชบอร์ดด้วย (หัวหน้าทีมทำ)
