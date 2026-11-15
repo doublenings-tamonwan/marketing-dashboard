@@ -16,7 +16,8 @@ session หลักทำหน้าที่ **หัวหน้าทีม
 
 | ลำดับ | agent | หน้าที่ | ไฟล์ที่เขียน |
 |---|---|---|---|
-| 1 | `idea-scout` | นักหาไอเดีย | `01-ideas.md` |
+| 0 | `creative-planner` | ครีเอทีฟ: วางแผนว่าช่องควรลงคลิปอะไรต่อ ลำดับ/วัน/รูปแบบ | `office/creative/content-plan.md` + `00-creative-brief.md` |
+| 1 | `idea-scout` | นักหาไอเดีย (ตามบรีฟของครีเอทีฟ) | `01-ideas.md` |
 | 2 | `script-writer` | นักเขียนสคริปต์ | `02-scripts.md` |
 | 3 | `fact-checker` | ผู้ตรวจข้อเท็จจริง | `03-factcheck.md` |
 | 4 | `visual-director` | ผู้กำกับภาพ | `04-shots.md` |
@@ -46,4 +47,5 @@ session หลักทำหน้าที่ **หัวหน้าทีม
 - ส่งภาพสถิติในแชท → หัวหน้าทีมเก็บภาพไว้ใน `office/stats/screenshots/` ถอดตัวเลขลง `office/stats/weekly/<ปี>-W<เลขสัปดาห์>.md` แล้วส่งให้ `performance-analyst`
 - ส่งไฟล์ export จาก TikTok Studio (.zip/.xlsx) → รัน `python3 office/stats/import_export.py <ไฟล์>` (เก็บต้นฉบับลง `raw/` รวมตัวเลขลง `data/*.csv`) แล้วเรียก `stats-tracker` — โครงสร้างแฟ้มสถิติดูที่ `office/stats/README.md`
 - แนบไฟล์คลิปแล้วขอให้ตัดต่อ → `script-writer` เขียนข้อความบนจอ แล้ว `video-editor` ตัดต่อ จากนั้นหัวหน้าทีมดูเฟรมเช็กเอง แล้วส่งไฟล์ตัวอย่างให้ตรวจ (ไม่ commit ไฟล์วิดีโอ) — ซับไทยต้องใช้ `office/editor/burn_subs.py` เท่านั้น
+- ถาม "ควรลงคลิปอะไรต่อ" หรือขอแผนคอนเทนต์ → เรียก `creative-planner` อัปเดต `office/creative/content-plan.md`
 - ถามเรื่องเครื่องมือ เช่น "ทำภาพแบบนี้ใช้อะไรดี" → เรียก `tool-advisor`
