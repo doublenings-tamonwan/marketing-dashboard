@@ -6,6 +6,7 @@
 
 pose:  stand | wave | point | think | cheer
 face:  smile | talk | surprised | wink | happy | think
+outfit: casual (เสื้อลายดอก) | school (ชุดนักเรียนเกาหลี — ใช้กับซีรีส์ "ซีรีส์ไม่ได้บอก")
 ขยับปากตอนพูด: สลับ face="smile" ↔ "talk" ทุก ~0.12 วิ · กะพริบตา: ใช้ face="happy" 2–3 เฟรม
 แผ่นตัวละคร: python3 office/editor/character.py sheet.png
 """
@@ -29,6 +30,9 @@ BLOUSE = (255, 255, 255)
 DOT = (110, 160, 230)
 PANTS = (128, 84, 58)
 PINK = (255, 105, 160)
+BLAZER = (40, 52, 98)
+SKIRT = (52, 66, 112)
+RIBBON = (214, 52, 70)
 GLASS = (40, 30, 36)
 LW = 7  # ความหนาเส้นขอบ
 
@@ -59,17 +63,25 @@ def _ell(d, box, fill, outline=True, w=LW):
     d.ellipse([v * S for v in box], fill=fill, outline=OUT if outline else None, width=w * S if outline else 0)
 
 
-def _arm(d, a, b, w=30):
+def _arm(d, a, b, w=30, sleeve=None):
     for col, ww in ((OUT, w + 2 * LW), (SKIN, w)):
         d.line([a[0] * S, a[1] * S, b[0] * S, b[1] * S], fill=col, width=ww * S)
         for x, y in (a, b):
             r = ww * S / 2
             d.ellipse((x * S - r, y * S - r, x * S + r, y * S + r), fill=col)
+    if sleeve:  # แขนเสื้อยาวถึง ~70% ของแขน
+        c = (a[0] + (b[0] - a[0]) * 0.72, a[1] + (b[1] - a[1]) * 0.72)
+        for col, ww in ((OUT, w + 8 + 2 * LW), (sleeve, w + 8)):
+            d.line([a[0] * S, a[1] * S, c[0] * S, c[1] * S], fill=col, width=ww * S)
+            for x, y in (a, c):
+                r = ww * S / 2
+                d.ellipse((x * S - r, y * S - r, x * S + r, y * S + r), fill=col)
+        d.line([c[0] * S - 6 * S, c[1] * S, c[0] * S + 6 * S, c[1] * S], fill=(255, 255, 255), width=5 * S)
     r = 22
     _ell(d, (b[0] - r, b[1] - r, b[0] + r, b[1] + r), SKIN)
 
 
-def draw_nagaji(pose="stand", face="smile", height=820, sticker=True):
+def draw_nagaji(pose="stand", face="smile", height=820, sticker=True, outfit="casual"):
     im = Image.new("RGBA", (BW * S, BH * S), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
 
@@ -84,6 +96,27 @@ def draw_nagaji(pose="stand", face="smile", height=820, sticker=True):
     _blob(d, tips, HAIR_TIP, it=3, outline=False)
 
     # ---- ตัว (เล็ก น่ารัก)
+    if outfit == "school":
+        _school_body(d)
+    else:
+        _casual_body(d)
+
+    # ---- แขน
+    L, R = (198, 505), (402, 505)
+    arms = {"stand": [(L, (186, 600)), (R, (414, 600))],
+            "wave": [(L, (186, 600)), (R, (478, 372))],
+            "point": [(L, (186, 600)), (R, (520, 470))],
+            "think": [(L, (186, 600)), (R, (338, 448))],
+            "cheer": [(L, (116, 360)), (R, (484, 360))]}[pose]
+    for a, b in arms:
+        _arm(d, a, b, sleeve=BLAZER if outfit == "school" else None)
+    if pose == "point":
+        _arm(d, (530, 462), (562, 446), w=11)
+    _face_and_hair(im, d, face)
+    return _finish(im, height, sticker)
+
+
+def _casual_body(d):
     _blob(d, [(228, 600), (372, 600), (386, 700), (308, 700), (300, 650), (292, 700), (214, 700)], PANTS, it=1)
     _ell(d, (205, 688, 292, 722), (255, 250, 248))
     _ell(d, (308, 688, 395, 722), (255, 250, 248))
@@ -98,18 +131,46 @@ def draw_nagaji(pose="stand", face="smile", height=820, sticker=True):
             d.ellipse(((cx - 4) * S, (cy - 4) * S, (cx + 4) * S, (cy + 4) * S), fill=DOT)
         d.ellipse(((x - 3) * S, (y - 3) * S, (x + 3) * S, (y + 3) * S), fill=(255, 214, 110))
 
-    # ---- แขน
-    L, R = (198, 505), (402, 505)
-    arms = {"stand": [(L, (186, 600)), (R, (414, 600))],
-            "wave": [(L, (186, 600)), (R, (478, 372))],
-            "point": [(L, (186, 600)), (R, (520, 470))],
-            "think": [(L, (186, 600)), (R, (338, 448))],
-            "cheer": [(L, (116, 360)), (R, (484, 360))]}[pose]
-    for a, b in arms:
-        _arm(d, a, b)
-    if pose == "point":
-        _arm(d, (530, 462), (562, 446), w=11)
 
+def _school_body(d):
+    """ชุดนักเรียนเกาหลี: เบลเซอร์กรมท่า เชิ้ตขาว โบว์แดง กระโปรงจีบลายสก็อต ถุงเท้ายาว รองเท้าโลฟเฟอร์"""
+    # ขา + ถุงเท้าขาวยาว + รองเท้า
+    for x in (258, 342):
+        d.rounded_rectangle(((x - 17) * S, 640 * S, (x + 17) * S, 700 * S), 8 * S, fill=SKIN, outline=OUT, width=LW * S)
+        d.rounded_rectangle(((x - 18) * S, 668 * S, (x + 18) * S, 706 * S), 6 * S, fill=(255, 255, 255), outline=OUT, width=LW * S)
+    _ell(d, (205, 690, 292, 724), (40, 32, 36))
+    _ell(d, (308, 690, 395, 724), (40, 32, 36))
+    # กระโปรงจีบลายสก็อต
+    sk = [(226, 588), (374, 588), (404, 668), (196, 668)]
+    _blob(d, sk, SKIRT, it=1)
+    for k in range(1, 7):  # จีบ
+        x0 = 226 + k * 148 / 7; x1 = 196 + k * 208 / 7
+        d.line((x0 * S, 594 * S, x1 * S, 664 * S), fill=(30, 40, 75), width=3 * S)
+    for y in (612, 640):  # ลายสก็อต
+        d.line((210 * S, y * S, 390 * S, y * S), fill=(200, 70, 80), width=3 * S)
+    for x in (250, 300, 350):
+        d.line((x * S, 594 * S, (x + (x - 300) * 0.25) * S, 664 * S), fill=(120, 160, 120), width=2 * S)
+    # เบลเซอร์
+    _blob(d, [(232, 455), (368, 455), (392, 612), (208, 612)], BLAZER, it=2)
+    _ell(d, (182, 452, 262, 532), BLAZER)
+    _ell(d, (338, 452, 418, 532), BLAZER)
+    # เชิ้ตขาว (คอวี) + โบว์แดง
+    d.polygon(_s([(262, 456), (338, 456), (300, 560)]), fill=(255, 255, 255), outline=OUT, width=4 * S)
+    d.line((262 * S, 456 * S, 300 * S, 560 * S), fill=OUT, width=5 * S)
+    d.line((338 * S, 456 * S, 300 * S, 560 * S), fill=OUT, width=5 * S)
+    for side in (-1, 1):
+        d.polygon(_s([(300, 482), (300 + side * 34, 466), (300 + side * 34, 500)]), fill=RIBBON, outline=OUT, width=4 * S)
+    d.polygon(_s([(292, 488), (284, 524), (298, 516)]), fill=RIBBON, outline=OUT, width=3 * S)
+    d.polygon(_s([(308, 488), (316, 524), (302, 516)]), fill=RIBBON, outline=OUT, width=3 * S)
+    _ell(d, (290, 472, 310, 494), (235, 80, 90), w=4)
+    # กระดุมทอง + ตราโรงเรียน + ป้ายชื่อ
+    for y in (572, 596):
+        _ell(d, (305, y - 7, 319, y + 7), (240, 196, 80), w=3)
+    d.rounded_rectangle((342 * S, 520 * S, 372 * S, 548 * S), 6 * S, fill=(240, 196, 80), outline=OUT, width=3 * S)
+    d.rounded_rectangle((226 * S, 524 * S, 270 * S, 538 * S), 3 * S, fill=(255, 255, 255), outline=OUT, width=3 * S)
+
+
+def _face_and_hair(im, d, face):
     # ---- หน้า
     _ell(d, (138, 168, 462, 462), SKIN)
     # เงาใต้หน้าม้า
@@ -198,6 +259,9 @@ def draw_nagaji(pose="stand", face="smile", height=820, sticker=True):
         d.polygon(_s([(bx, byy), (bx + side * 36, byy - 24), (bx + side * 36, byy + 24)]), fill=PINK, outline=OUT, width=4 * S)
     _ell(d, (bx - 11, byy - 11, bx + 11, byy + 11), (255, 160, 200), w=4)
 
+
+
+def _finish(im, height, sticker):
     out = im.resize((BW, BH), Image.LANCZOS)
     if sticker:  # ขอบสติกเกอร์ขาว + เงานุ่ม
         a = out.getchannel("A").point(lambda v: 255 if v > 20 else 0)

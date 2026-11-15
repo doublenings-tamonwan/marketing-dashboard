@@ -157,7 +157,7 @@ def frame(i, sc):
     d.text((W/2-tw/2, 116), tag, font=ft, fill="white")
     pill(d, label, 225, ko, kofirst)
     # mascot bottom-left (keeps clear of TikTok buttons on the right and caption at bottom)
-    m = draw_nagaji(pose=pose, face=face, height=780)
+    m = draw_nagaji(pose=pose, face=face, height=780, outfit="school")
     img.alpha_composite(m, (10, H - 190 - m.height))
     img.alpha_composite(doodles(i))
     subtitle(d, sub, 870)
