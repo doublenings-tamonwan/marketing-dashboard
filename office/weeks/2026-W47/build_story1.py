@@ -15,6 +15,9 @@ SR = 48000; FPS = 30; W, H = M.W, M.H
 # ฉาก -> (ไฟล์, ช่วงพูด) จับคู่จากช่วงเงียบในไฟล์เสียง
 PLAN = [(1, 1.25, 7.10), (1, 7.75, 13.45), (1, 14.90, 19.50), (2, 1.45, 8.45), (2, 9.05, 20.05),
         (3, 1.70, 7.75), (3, 8.65, 15.20), (3, 15.75, 20.70), (3, 21.55, 30.65)]
+# ท่อนเสียงที่ตัดทิ้ง (ไฟล์, เริ่ม, จบ) — "ตอนหน้าจะมาเล่าเรื่องโซจูต่อ" (เจ้าของช่องขอตัด)
+CUTS = [(3, 26.3, 27.8)]
+END_CARD = "เจอกันคลิปหน้า!"  # ข้อความปิดท้ายหลังเสียงพูดจบ
 # ซับ (ตามบท v2 — ต้องให้เจ้าของช่องเช็กกับที่พูดจริง)
 SUBS = [
   ["ใครดูซีรีส์เกาหลีบ่อย ๆ\nเคยสังเกตไหมคะ", "ฉากวันเกิดเนี่ย\nต้องมี[ซุปสาหร่าย]ตลอดเลย"],
@@ -25,7 +28,7 @@ SUBS = [
   ["มี[เรื่องเล่า]ตั้งแต่\nสมัยโชซอนเลยนะ", "ว่ามีคนไปเห็นวาฬ\nที่เพิ่งคลอดลูก", "กินสาหร่ายเข้าไป\n[เต็มท้อง]เลย"],
   ["ทีนี้ วันสอบ\n[ห้ามกิน]เด็ดขาดเลยนะ", "เพราะสาหร่ายมัน[ลื่น]\nใช่ไหม…", "ความรู้ก็จะ\nลื่นหลุดไปด้วย"],
   ["ขนาดคำว่า\n\"กินซุปสาหร่าย\"", "ในภาษาเกาหลี\nเขายังใช้แปลว่า[สอบตก]"],
-  ["เพื่อน ๆ เคยเห็นฉากนี้\nในเรื่องไหนบ้าง", "มา[เมนต์]บอกกันหน่อยน้า", "ตอนหน้ามาเล่า\nเรื่องโซจูต่อ", "อย่าลืม[กดติดตาม]ไว้นะคะ"],
+  ["เพื่อน ๆ เคยเห็นฉากนี้\nในเรื่องไหนบ้าง", "มา[เมนต์]บอกกันหน่อยน้า", "อย่าลืม[กดติดตาม]ไว้นะคะ"],
 ]
 
 TEMPO = float(os.environ.get("TEMPO", "1.0"))   # 1.08 = พูดเร็วขึ้น 8%
@@ -65,6 +68,7 @@ def build_audio():
     for n, a, b in PLAN:
         a, b = a / TEMPO, b / TEMPO
         x = vos[n]; segs = speech_segs(x, a, b); st = t; talk = []
+        segs = [g for g in segs if not any(cn == n and g[0] * TEMPO < c1 and g[1] * TEMPO > c0 for cn, c0, c1 in CUTS)]
         for i, (s0, s1) in enumerate(segs):
             s0 -= 0.08; s1 += 0.08
             if i:
@@ -77,7 +81,7 @@ def build_audio():
         scenes.append({"start": st - (0.35 if not scenes else 0.35), "speech_start": st, "end": t, "talk": talk})
     scenes[0]["start"] = 0.0
     for i in range(1, len(scenes)): scenes[i]["start"] = scenes[i - 1]["end"]
-    tail = 1.2; pieces.append(np.zeros(int(SR * tail), np.float32)); scenes[-1]["end"] += tail
+    tail = 2.0; pieces.append(np.zeros(int(SR * tail), np.float32)); scenes[-1]["end"] += tail
     y = np.concatenate(pieces)
     with wave.open(f"{WD}/vo-raw.wav", "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((np.clip(y, -1, 1) * 32767).astype(np.int16).tobytes())
@@ -103,6 +107,10 @@ def build_subs(scenes):
             end = starts[i + 1] if i + 1 < len(lines) else sc["end"] - 0.1
             ln = l.count("\n") + 1
             subs.append({"start": round(starts[i], 2), "end": round(end, 2), "text": l, "y": 870 - 112 * ln})
+    if END_CARD:
+        sp_end = scenes[-1]["talk"][-1][1]
+        subs[-1]["end"] = round(sp_end + 0.5, 2)
+        subs.append({"start": round(sp_end + 0.5, 2), "end": round(scenes[-1]["end"] - 0.05, 2), "text": END_CARD, "y": 758})
     json.dump(subs, open(f"{WD}/subs.json", "w"), ensure_ascii=False, indent=1)
     return subs
 
@@ -159,7 +167,7 @@ def render(scenes):
     p = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
                           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
                           f"{WD}/base.mp4"], stdin=subprocess.PIPE)
-    subs = json.load(open(f"{WD}/subs.json")); last = subs[-1]
+    subs = json.load(open(f"{WD}/subs.json")); last = next(x for x in subs if "กดติดตาม" in x["text"])
     BELL = bell_icon(170)
     si = 0
     for f in range(N):
@@ -186,7 +194,7 @@ def render(scenes):
         bob = int(6 * math.sin(t * 2 * math.pi / 1.6)); hop_in = int(60 * max(0, 1 - lt / 0.2) ** 2)
         frame.alpha_composite(m, (10, H - 190 - m.height + bob + hop_in))
         frame.alpha_composite(doo)
-        if last["start"] <= t:
+        if last["start"] <= t < last["end"] + 0.3:
             bt = t - last["start"]; sc_ = min(1, bt / 0.15)
             ang = 18 * math.sin(bt * 2 * math.pi * 3) * math.exp(-bt * 1.2) if bt > 0.15 else 0
             b = BELL.rotate(ang, resample=Image.BICUBIC, center=(85, 18))
