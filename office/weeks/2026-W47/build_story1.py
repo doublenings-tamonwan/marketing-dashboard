@@ -14,7 +14,7 @@ SR = 48000; FPS = 30; W, H = M.W, M.H
 
 # ฉาก -> (ไฟล์, ช่วงพูด) จับคู่จากช่วงเงียบในไฟล์เสียง
 PLAN = [(1, 1.25, 7.10), (1, 7.75, 13.45), (1, 14.90, 19.50), (2, 1.45, 8.45), (2, 9.05, 20.05),
-        (3, 1.70, 7.75), (3, 8.65, 15.20), (3, 15.75, 20.70), (3, 21.55, 30.65)]
+        (3, 1.70, 7.75), (3, 8.65, 15.20), (3, 15.75, 20.70), [(3, 21.55, 30.65), (4, 0.90, 2.60)]]  # ไฟล์ 4 = "เจอกันคลิปหน้านะ"
 # ท่อนเสียงที่ตัดทิ้ง (ไฟล์, เริ่ม, จบ) — "ตอนหน้าจะมาเล่าเรื่องโซจูต่อ" (เจ้าของช่องขอตัด)
 CUTS = [(3, 26.3, 27.8)]
 END_CARD = "เจอกันคลิปหน้า!"  # ข้อความปิดท้ายหลังเสียงพูดจบ
@@ -63,19 +63,23 @@ def speech_segs(x, a, b):
     return m
 
 def build_audio():
-    vos = {n: load(n) for n in (1, 2, 3)}
+    vos = {n: load(n) for n in (1, 2, 3, 4)}
     pieces = [np.zeros(int(SR * 0.35), np.float32)]; t = 0.35; scenes = []
-    for n, a, b in PLAN:
-        a, b = a / TEMPO, b / TEMPO
-        x = vos[n]; segs = speech_segs(x, a, b); st = t; talk = []
-        segs = [g for g in segs if not any(cn == n and g[0] * TEMPO < c1 and g[1] * TEMPO > c0 for cn, c0, c1 in CUTS)]
-        for i, (s0, s1) in enumerate(segs):
-            s0 -= 0.08; s1 += 0.08
-            if i:
-                gap = min(0.3, max(0.0, s0 - segs[i - 1][1] - 0.16))
-                pieces.append(np.zeros(int(SR * gap), np.float32)); t += gap
-            c = x[int(s0 * SR):int(s1 * SR)]
-            pieces.append(c); talk.append([t, t + len(c) / SR]); t += len(c) / SR
+    for entry in PLAN:
+        st = t; talk = []
+        for j, (n, a, b) in enumerate(entry if isinstance(entry, list) else [entry]):
+            a, b = a / TEMPO, b / TEMPO
+            x = vos[n]; segs = speech_segs(x, a, b)
+            segs = [g for g in segs if not any(cn == n and g[0] * TEMPO < c1 and g[1] * TEMPO > c0 for cn, c0, c1 in CUTS)]
+            if j:
+                pieces.append(np.zeros(int(SR * 0.3), np.float32)); t += 0.3
+            for i, (s0, s1) in enumerate(segs):
+                s0 -= 0.08; s1 += 0.08
+                if i:
+                    gap = min(0.3, max(0.0, s0 - segs[i - 1][1] - 0.16))
+                    pieces.append(np.zeros(int(SR * gap), np.float32)); t += gap
+                c = x[int(s0 * SR):int(s1 * SR)]
+                pieces.append(c); talk.append([t, t + len(c) / SR]); t += len(c) / SR
         t_end = t + 0.35
         pieces.append(np.zeros(int(SR * 0.35), np.float32)); t = t_end
         scenes.append({"start": st - (0.35 if not scenes else 0.35), "speech_start": st, "end": t, "talk": talk})
@@ -89,8 +93,8 @@ def build_audio():
 
 def build_subs(scenes):
     subs = []
-    for sc, lines in zip(scenes, SUBS):
-        talk = sc["talk"]; total = sum(b - a for a, b in talk)
+    for si_, (sc, lines) in enumerate(zip(scenes, SUBS)):
+        talk = sc["talk"][:-1] if (END_CARD and si_ == len(scenes) - 1) else sc["talk"]; total = sum(b - a for a, b in talk)
         weights = [len(l.replace("[", "").replace("]", "")) for l in lines]; tw = sum(weights)
         # แบ่งเวลาพูดตามจำนวนตัวอักษร แล้วยึดจุดเริ่มกับท่อนพูดที่ใกล้ที่สุด
         acc = 0; bounds = []
@@ -108,9 +112,9 @@ def build_subs(scenes):
             ln = l.count("\n") + 1
             subs.append({"start": round(starts[i], 2), "end": round(end, 2), "text": l, "y": 870 - 112 * ln})
     if END_CARD:
-        sp_end = scenes[-1]["talk"][-1][1]
-        subs[-1]["end"] = round(sp_end + 0.5, 2)
-        subs.append({"start": round(sp_end + 0.5, 2), "end": round(scenes[-1]["end"] - 0.05, 2), "text": END_CARD, "y": 758})
+        a4 = scenes[-1]["talk"][-1][0]   # ท่อนสุดท้าย = เสียง "เจอกันคลิปหน้านะ"
+        subs[-1]["end"] = round(a4 - 0.05, 2)
+        subs.append({"start": round(a4 - 0.05, 2), "end": round(scenes[-1]["end"] - 0.05, 2), "text": END_CARD, "y": 758})
     json.dump(subs, open(f"{WD}/subs.json", "w"), ensure_ascii=False, indent=1)
     return subs
 
