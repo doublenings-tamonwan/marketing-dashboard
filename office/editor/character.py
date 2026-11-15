@@ -1,157 +1,224 @@
-"""ตัวละครประจำช่อง "น้องนางาจิ" — วาดด้วยโค้ด หน้าตาเหมือนเดิมทุกคลิป
+"""มาสคอตประจำช่อง "น้องนางาจิ" (v2 คาวาอี้ + ขอบสติกเกอร์) — วาดด้วยโค้ด หน้าตาเหมือนเดิมทุกคลิป
 
 ใช้งาน:
     from character import draw_nagaji
-    img = draw_nagaji(pose="wave", face="smile", height=900)   # RGBA พื้นโปร่งใส
+    img = draw_nagaji(pose="wave", face="smile", height=900)   # RGBA พื้นโปร่งใส มีขอบสติกเกอร์ขาว
 
 pose:  stand | wave | point | think | cheer
 face:  smile | talk | surprised | wink | happy | think
-หากต้องการขยับปากตอนพูด ให้สลับ face="smile" กับ "talk" ทุก ~0.12 วิ
-สั่งแสดงแผ่นตัวละคร: python3 office/editor/character.py sheet.png
+ขยับปากตอนพูด: สลับ face="smile" ↔ "talk" ทุก ~0.12 วิ · กะพริบตา: ใช้ face="happy" 2–3 เฟรม
+แผ่นตัวละคร: python3 office/editor/character.py sheet.png
 """
 import math
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
-S = 4                      # วาดใหญ่ 4 เท่าแล้วย่อ = ขอบเนียน
-BW, BH = 600, 900          # กรอบตัวละครพื้นฐาน
-SKIN = (255, 219, 196)
-SKIN_D = (240, 188, 160)
-HAIR = (74, 44, 40)
-HAIR_L = (138, 90, 68)
-INK = (59, 42, 46)
-BLUSH = (255, 150, 170, 150)
-BLOUSE = (250, 250, 255)
-DOT = (120, 160, 220)
-PANTS = (122, 78, 53)
-SHOE = (240, 235, 230)
-GLASS = (45, 35, 40)
-
-
-def _p(*xy):
-    return [v * S for v in xy]
-
-
-def _limb(d, a, b, w, col):
-    d.line(_p(*a, *b), fill=col, width=w * S)
-    r = w * S / 2
-    for x, y in (a, b):
-        d.ellipse((x * S - r, y * S - r, x * S + r, y * S + r), fill=col)
+S = 4
+BW, BH = 600, 820
+OUT = (70, 40, 44)
+SKIN = (255, 224, 204)
+SKIN_SH = (248, 196, 178)
+HAIR = (92, 52, 46)
+HAIR_HI = (150, 96, 76)
+HAIR_TIP = (160, 104, 80)
+EYE = (58, 35, 40)
+IRIS = (150, 92, 64)
+BLUSH = (255, 140, 165, 150)
+BLOUSE = (255, 255, 255)
+DOT = (110, 160, 230)
+PANTS = (128, 84, 58)
+PINK = (255, 105, 160)
+GLASS = (40, 30, 36)
+LW = 7  # ความหนาเส้นขอบ
 
 
-def draw_nagaji(pose="stand", face="smile", height=900, glasses=True):
+def _s(pts):
+    return [(x * S, y * S) for x, y in pts]
+
+
+def _chaikin(pts, it=3, closed=True):
+    for _ in range(it):
+        new = []
+        n = len(pts)
+        rng = range(n) if closed else range(n - 1)
+        for i in rng:
+            p, q = pts[i], pts[(i + 1) % n]
+            new += [(0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]),
+                    (0.25 * p[0] + 0.75 * q[0], 0.25 * p[1] + 0.75 * q[1])]
+        pts = new
+    return pts
+
+
+def _blob(d, pts, fill, it=3, outline=True):
+    sm = _s(_chaikin(pts, it))
+    d.polygon(sm, fill=fill, outline=OUT if outline else None, width=LW * S if outline else 0)
+
+
+def _ell(d, box, fill, outline=True, w=LW):
+    d.ellipse([v * S for v in box], fill=fill, outline=OUT if outline else None, width=w * S if outline else 0)
+
+
+def _arm(d, a, b, w=30):
+    for col, ww in ((OUT, w + 2 * LW), (SKIN, w)):
+        d.line([a[0] * S, a[1] * S, b[0] * S, b[1] * S], fill=col, width=ww * S)
+        for x, y in (a, b):
+            r = ww * S / 2
+            d.ellipse((x * S - r, y * S - r, x * S + r, y * S + r), fill=col)
+    r = 22
+    _ell(d, (b[0] - r, b[1] - r, b[0] + r, b[1] + r), SKIN)
+
+
+def draw_nagaji(pose="stand", face="smile", height=820, sticker=True):
     im = Image.new("RGBA", (BW * S, BH * S), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
 
-    # ผมด้านหลัง (ยาวถึงไหล่ ปลายสว่าง)
-    d.ellipse(_p(112, 118, 488, 520), fill=HAIR)
-    d.rounded_rectangle(_p(122, 300, 478, 600), radius=90 * S, fill=HAIR)
-    d.rounded_rectangle(_p(126, 520, 474, 610), radius=60 * S, fill=HAIR_L)   # ปลายผมสว่าง
-    for i, x in enumerate(range(132, 420, 58)):                                 # ปลายลอนเรียงในกรอบผม
-        d.ellipse(_p(x, 572 + (i % 2) * 10, x + 66, 636 + (i % 2) * 10), fill=HAIR_L)
+    # ---- ผมด้านหลัง (ลอนนุ่ม ปลายสว่าง)
+    back = [(300, 86), (412, 100), (488, 172), (512, 292), (505, 420), (522, 520), (478, 588), (428, 560),
+            (392, 596), (340, 548), (260, 548), (208, 596), (172, 560), (122, 588), (78, 520), (95, 420),
+            (88, 292), (112, 172), (188, 100)]
+    _blob(d, back, HAIR)
+    tips = [(96, 470), (150, 520), (205, 545), (250, 520), (350, 520), (395, 545), (450, 520), (504, 470),
+            (515, 528), (478, 590), (430, 562), (392, 598), (340, 550), (260, 550), (208, 598), (170, 562),
+            (122, 590), (84, 528)]
+    _blob(d, tips, HAIR_TIP, it=3, outline=False)
 
-    # คอ + ตัว
-    d.rounded_rectangle(_p(278, 425, 322, 475), radius=12 * S, fill=SKIN_D)
-    # กางเกงขายาวทรงกว้าง
-    d.polygon(_p(205, 630, 395, 630, 425, 855, 315, 855, 300, 700, 285, 855, 175, 855), fill=PANTS)
-    d.ellipse(_p(178, 840, 282, 880), fill=SHOE)
-    d.ellipse(_p(318, 840, 422, 880), fill=SHOE)
-    # เสื้อแขนตุ๊กตา ลายดอกฟ้า
-    d.polygon(_p(222, 460, 378, 460, 408, 645, 192, 645), fill=BLOUSE)
-    d.ellipse(_p(160, 455, 250, 545), fill=BLOUSE)
-    d.ellipse(_p(350, 455, 440, 545), fill=BLOUSE)
-    for (x, y) in [(240, 500), (290, 520), (340, 495), (260, 575), (320, 590), (365, 560), (215, 600),
-                   (380, 615), (190, 490), (410, 495), (300, 470)]:
+    # ---- ตัว (เล็ก น่ารัก)
+    _blob(d, [(228, 600), (372, 600), (386, 700), (308, 700), (300, 650), (292, 700), (214, 700)], PANTS, it=1)
+    _ell(d, (205, 688, 292, 722), (255, 250, 248))
+    _ell(d, (308, 688, 395, 722), (255, 250, 248))
+    _blob(d, [(232, 455), (368, 455), (392, 610), (208, 610)], BLOUSE, it=2)
+    _ell(d, (182, 452, 262, 532), BLOUSE)
+    _ell(d, (338, 452, 418, 532), BLOUSE)
+    for (x, y) in [(250, 500), (300, 520), (348, 498), (268, 575), (330, 585), (225, 545), (372, 555),
+                   (205, 490), (395, 490), (300, 470)]:
         for k in range(5):
             a = k * 2 * math.pi / 5
             cx, cy = x + 7 * math.cos(a), y + 7 * math.sin(a)
-            d.ellipse(_p(cx - 4, cy - 4, cx + 4, cy + 4), fill=DOT)
-        d.ellipse(_p(x - 3, y - 3, x + 3, y + 3), fill=(255, 220, 120))
-    d.arc(_p(255, 440, 345, 490), 20, 160, fill=(225, 225, 235), width=4 * S)  # คอเสื้อ
+            d.ellipse(((cx - 4) * S, (cy - 4) * S, (cx + 4) * S, (cy + 4) * S), fill=DOT)
+        d.ellipse(((x - 3) * S, (y - 3) * S, (x + 3) * S, (y + 3) * S), fill=(255, 214, 110))
 
-    # แขน
-    L_sh, R_sh = (190, 505), (410, 505)
-    arms = {
-        "stand": [(L_sh, (180, 625)), (R_sh, (420, 625))],
-        "wave": [(L_sh, (180, 625)), (R_sh, (480, 330))],
-        "point": [(L_sh, (180, 625)), (R_sh, (540, 470))],
-        "think": [(L_sh, (180, 625)), (R_sh, (330, 430))],
-        "cheer": [(L_sh, (110, 330)), (R_sh, (490, 330))],
-    }[pose]
+    # ---- แขน
+    L, R = (198, 505), (402, 505)
+    arms = {"stand": [(L, (186, 600)), (R, (414, 600))],
+            "wave": [(L, (186, 600)), (R, (478, 372))],
+            "point": [(L, (186, 600)), (R, (520, 470))],
+            "think": [(L, (186, 600)), (R, (338, 448))],
+            "cheer": [(L, (116, 360)), (R, (484, 360))]}[pose]
     for a, b in arms:
-        _limb(d, a, b, 34, SKIN)
-        d.ellipse(_p(b[0] - 24, b[1] - 24, b[0] + 24, b[1] + 24), fill=SKIN)
-    if pose == "point":  # นิ้วชี้
-        _limb(d, (556, 462), (588, 448), 12, SKIN)
-    if pose == "think":
-        _limb(d, (330, 420), (318, 398), 12, SKIN)
+        _arm(d, a, b)
+    if pose == "point":
+        _arm(d, (530, 462), (562, 446), w=11)
 
-    # หน้า
-    d.ellipse(_p(150, 165, 450, 445), fill=SKIN)
-    # หน้าม้าปัดข้าง (ด้านบน + ขอบหยัก)
-    d.chord(_p(136, 98, 464, 360), 180, 360, fill=HAIR)
-    # หน้าม้าปัดข้าง: สองก้อนโค้งซ้อนกัน แสกเยื้องซ้าย
-    d.ellipse(_p(140, 168, 300, 262), fill=HAIR)
-    d.ellipse(_p(228, 150, 462, 258), fill=HAIR)
-    d.polygon(_p(136, 228, 150, 330, 172, 250), fill=HAIR)       # ผมข้างแก้มซ้าย
-    d.polygon(_p(464, 228, 450, 330, 428, 250), fill=HAIR)       # ผมข้างแก้มขวา
-    if glasses:  # แว่นกันแดดคาดหัว
-        d.rounded_rectangle(_p(205, 132, 290, 172), radius=16 * S, fill=GLASS)
-        d.rounded_rectangle(_p(310, 132, 395, 172), radius=16 * S, fill=GLASS)
-        d.line(_p(288, 150, 312, 150), fill=GLASS, width=6 * S)
-        d.line(_p(214, 142, 246, 142), fill=(110, 100, 110), width=4 * S)
+    # ---- หน้า
+    _ell(d, (138, 168, 462, 462), SKIN)
+    # เงาใต้หน้าม้า
+    sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sh).ellipse([v * S for v in (160, 200, 440, 300)], fill=SKIN_SH + (160,))
+    m = Image.new("L", im.size, 0)
+    ImageDraw.Draw(m).ellipse([v * S for v in (146, 176, 454, 454)], fill=255)
+    im.paste(Image.alpha_composite(im.crop((0, 0) + im.size), sh), (0, 0), m)
+    d = ImageDraw.Draw(im)
 
-    # ตา
-    ex = (248, 352)
-    ey = 318
-    def oval_eye(x, big=False, look=(0, 0)):
-        w, h = (19, 25) if big else (16, 21)
-        d.ellipse(_p(x - w + look[0], ey - h + look[1], x + w + look[0], ey + h + look[1]), fill=INK)
-        d.ellipse(_p(x - 6 + look[0], ey - 12 + look[1], x + 3 + look[0], ey - 3 + look[1]), fill=(255, 255, 255))
-    def arc_eye(x):
-        d.arc(_p(x - 20, ey - 14, x + 20, ey + 16), 200, 340, fill=INK, width=7 * S)
+    # ---- ตา (โต เป็นประกาย)
+    ey = 335
+    eyes = (236, 364)
+
+    def glossy(x, big=False, look=(0, 0)):
+        w, h = (30, 40) if big else (27, 36)
+        x += look[0]
+        y = ey + look[1]
+        d.ellipse(((x - w) * S, (y - h) * S, (x + w) * S, (y + h) * S), fill=EYE)
+        d.ellipse(((x - w + 7) * S, (y - 2) * S, (x + w - 7) * S, (y + h - 5) * S), fill=IRIS)
+        d.ellipse(((x - w + 12) * S, (y + 8) * S, (x + w - 12) * S, (y + h - 9) * S), fill=(190, 128, 90))
+        d.ellipse(((x - 17) * S, (y - 26) * S, (x + 1) * S, (y - 8) * S), fill=(255, 255, 255))
+        d.ellipse(((x + 8) * S, (y + 8) * S, (x + 16) * S, (y + 16) * S), fill=(255, 255, 255))
+        # ขนตาบน + หางตา
+        d.arc(((x - w - 2) * S, (y - h - 2) * S, (x + w + 2) * S, (y + h + 2) * S), 200, 340, fill=EYE, width=8 * S)
+        side = -1 if x < 300 else 1
+        d.line(((x + side * (w - 2)) * S, (y - h * 0.55) * S, (x + side * (w + 10)) * S, (y - h * 0.8) * S),
+               fill=EYE, width=6 * S)
+
+    def closed(x):
+        d.arc(((x - 26) * S, (ey - 16) * S, (x + 26) * S, (ey + 20) * S), 200, 340, fill=EYE, width=9 * S)
+
     if face in ("smile", "talk"):
-        oval_eye(ex[0]); oval_eye(ex[1])
+        glossy(eyes[0]); glossy(eyes[1])
     elif face == "surprised":
-        oval_eye(ex[0], True); oval_eye(ex[1], True)
+        glossy(eyes[0], True); glossy(eyes[1], True)
     elif face == "wink":
-        oval_eye(ex[0]); arc_eye(ex[1])
+        glossy(eyes[0]); closed(eyes[1])
     elif face == "happy":
-        arc_eye(ex[0]); arc_eye(ex[1])
+        closed(eyes[0]); closed(eyes[1])
     elif face == "think":
-        oval_eye(ex[0], look=(6, -6)); oval_eye(ex[1], look=(6, -6))
-    # คิ้วโค้งเล็ก ๆ (ยกขึ้นตอนตกใจ)
-    by = ey - (52 if face == "surprised" else 44)
-    for x in ex:
-        d.arc(_p(x - 20, by, x + 20, by + 22), 200, 340, fill=HAIR, width=6 * S)
-    # แก้ม
+        glossy(eyes[0], look=(7, -6)); glossy(eyes[1], look=(7, -6))
+
+    # คิ้ว
+    by = ey - (68 if face == "surprised" else 60)
+    for x in eyes:
+        d.arc(((x - 20) * S, by * S, (x + 20) * S, (by + 18) * S), 200, 340, fill=HAIR, width=6 * S)
+
+    # แก้ม + ขีดเขิน
     bl = Image.new("RGBA", im.size, (0, 0, 0, 0))
     bd = ImageDraw.Draw(bl)
-    bd.ellipse(_p(196, 352, 244, 380), fill=BLUSH)
-    bd.ellipse(_p(356, 352, 404, 380), fill=BLUSH)
+    for cx in (196, 404):
+        bd.ellipse(((cx - 30) * S, 378 * S, (cx + 30) * S, 404 * S), fill=BLUSH)
     im.alpha_composite(bl)
     d = ImageDraw.Draw(im)
+    for cx in (196, 404):
+        for k in (-12, 0, 12):
+            d.line(((cx + k - 4) * S, 396 * S, (cx + k + 4) * S, 386 * S), fill=(235, 100, 130), width=3 * S)
+
     # ปาก
     if face == "talk":
-        d.chord(_p(280, 378, 320, 418), 0, 180, fill=(190, 70, 90))
-        d.chord(_p(288, 398, 312, 414), 0, 180, fill=(255, 150, 160))
+        d.chord((282 * S, 392 * S, 318 * S, 430 * S), 0, 180, fill=(170, 60, 80), outline=OUT, width=3 * S)
+        d.chord((290 * S, 410 * S, 310 * S, 426 * S), 0, 180, fill=(255, 140, 160))
     elif face == "surprised":
-        d.ellipse(_p(288, 385, 312, 413), fill=(190, 70, 90))
+        d.ellipse((288 * S, 396 * S, 312 * S, 424 * S), fill=(170, 60, 80), outline=OUT, width=3 * S)
     elif face == "think":
-        d.line(_p(286, 398, 314, 394), fill=(190, 70, 90), width=6 * S)
-    else:
-        d.arc(_p(276, 372, 324, 404), 20, 160, fill=(190, 70, 90), width=7 * S)
+        d.line((288 * S, 410 * S, 314 * S, 404 * S), fill=OUT, width=5 * S)
+    else:  # ปากแมว ω
+        d.arc((276 * S, 392 * S, 302 * S, 414 * S), 20, 160, fill=OUT, width=5 * S)
+        d.arc((298 * S, 392 * S, 324 * S, 414 * S), 20, 160, fill=OUT, width=5 * S)
+
+    # ---- หน้าม้า (ลอยเป็นปอย ๆ)
+    bangs = [(112, 230), (130, 150), (205, 100), (300, 88), (402, 104), (474, 160), (490, 238), (462, 222),
+             (448, 262), (412, 200), (378, 252), (346, 192), (306, 262), (270, 190), (232, 252), (200, 205),
+             (160, 268), (134, 238)]
+    _blob(d, bangs, HAIR, it=2)
+    d.arc((170 * S, 112 * S, 430 * S, 300 * S), 205, 300, fill=HAIR_HI, width=14 * S)  # เงาผม
+
+    # ---- แว่นกันแดดคาดหัว + กิ๊บโบว์ชมพู
+    for x0 in (196, 312):
+        d.rounded_rectangle((x0 * S, 118 * S, (x0 + 92) * S, 162 * S), radius=18 * S, fill=GLASS, outline=OUT, width=4 * S)
+        d.line(((x0 + 14) * S, 130 * S, (x0 + 40) * S, 130 * S), fill=(130, 120, 130), width=4 * S)
+    d.line((288 * S, 138 * S, 312 * S, 138 * S), fill=GLASS, width=7 * S)
+    bx, byy = 452, 222
+    for side in (-1, 1):
+        d.polygon(_s([(bx, byy), (bx + side * 36, byy - 24), (bx + side * 36, byy + 24)]), fill=PINK, outline=OUT, width=4 * S)
+    _ell(d, (bx - 11, byy - 11, bx + 11, byy + 11), (255, 160, 200), w=4)
 
     out = im.resize((BW, BH), Image.LANCZOS)
+    if sticker:  # ขอบสติกเกอร์ขาว + เงานุ่ม
+        a = out.getchannel("A").point(lambda v: 255 if v > 20 else 0)
+        rim = a.filter(ImageFilter.MaxFilter(23))
+        canvas = Image.new("RGBA", out.size, (0, 0, 0, 0))
+        shadow = Image.new("RGBA", out.size, (120, 40, 70, 0))
+        shadow.putalpha(rim.filter(ImageFilter.GaussianBlur(10)).point(lambda v: int(v * 0.35)))
+        canvas.alpha_composite(shadow, (0, 0))
+        white = Image.new("RGBA", out.size, (255, 255, 255, 0))
+        white.putalpha(rim)
+        canvas.alpha_composite(white)
+        canvas.alpha_composite(out)
+        out = canvas
     if height != BH:
         out = out.resize((int(BW * height / BH), height), Image.LANCZOS)
     return out
 
 
 def sheet(path):
-    from PIL import ImageFont
     import os
+    from PIL import ImageFont
     fonts = os.path.join(os.path.dirname(__file__), "..", "assets", "fonts")
     f = ImageFont.truetype(os.path.join(fonts, "Prompt-Medium.ttf"), 30, layout_engine=ImageFont.Layout.RAQM)
     ft = ImageFont.truetype(os.path.join(fonts, "PlayfairDisplay-Italic.ttf"), 64, layout_engine=ImageFont.Layout.RAQM)
@@ -161,15 +228,17 @@ def sheet(path):
     W, H = 1500, 1260
     sh = Image.new("RGBA", (W, H), (251, 228, 236, 255))
     d = ImageDraw.Draw(sh)
-    d.text((W / 2, 40), "Nagaji · character sheet", font=ft, fill=(214, 70, 130), anchor="mt")
+    for x in range(0, W, 60):
+        d.rectangle((x, 0, x + 28, H), fill=(253, 236, 242))
+    d.text((W / 2, 40), "Nagaji · mascot sheet", font=ft, fill=(214, 70, 130), anchor="mt")
     for i, (p, fa, lab) in enumerate(combos):
         c, r = i % 3, i // 3
-        ch = draw_nagaji(p, fa, height=480)
+        ch = draw_nagaji(p, fa, height=470)
         x = 120 + c * 450
         y = 150 + r * 560
-        d.rounded_rectangle((x - 30, y - 10, x + 350, y + 520), radius=36, fill=(255, 255, 255))
         sh.alpha_composite(ch, (x + 160 - ch.width // 2, y))
-        d.text((x + 160, y + 490), lab, font=f, fill=(43, 34, 48), anchor="mm")
+        d.rounded_rectangle((x + 80, y + 478, x + 240, y + 524), radius=23, fill=(255, 255, 255))
+        d.text((x + 160, y + 501), lab, font=f, fill=(43, 34, 48), anchor="mm")
     sh.convert("RGB").save(path)
 
 
