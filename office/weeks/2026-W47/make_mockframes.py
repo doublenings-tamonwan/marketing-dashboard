@@ -7,6 +7,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 F = HERE + "/../../assets/fonts/"; KO = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
 def font(n, s): return ImageFont.truetype(F + n, s, layout_engine=ImageFont.Layout.RAQM)
 W, H = 1080, 1920
+SHIFT = 230
 NAVY = (22, 30, 66); YEL = (255, 209, 102); CORAL = (255, 99, 99)
 
 SCENES = [  # bg, crop zoom, focus y, pose, face, label, korean, kofirst, subtitle
@@ -80,7 +81,12 @@ def frame(i, sc):
     if bg and not os.path.exists(f"{HERE}/story1-bg/{bg}.jpg"):
         bg = {"bg1": "bg3"}.get(bg)   # fallback until the file arrives
     if bg:
-        img = cover(f"{HERE}/story1-bg/{bg}.jpg", zoom, fy).convert("RGBA")
+        src = cover(f"{HERE}/story1-bg/{bg}.jpg", zoom, fy)
+        img = Image.new("RGBA", (W, H), NAVY + (255,))
+        img.paste(src.crop((0, SHIFT, W, H)), (0, 0))   # lift subject above the mascot
+        fill = src.crop((0, H - 300, W, H)).resize((W, SHIFT + 120)).filter(ImageFilter.GaussianBlur(30))
+        fm = Image.linear_gradient("L").resize((W, SHIFT + 120)).point(lambda v: min(255, v * 3))
+        img.paste(fill, (0, H - SHIFT - 120), fm)
     else:
         img = Image.new("RGBA", (W, H), NAVY + (255,))
     grad(img, True, 420, 190); grad(img, False, 760, 235)
@@ -94,9 +100,9 @@ def frame(i, sc):
     d.text((W/2-tw/2, 116), tag, font=ft, fill="white")
     pill(d, label, 225, ko, kofirst)
     # mascot bottom-left (keeps clear of TikTok buttons on the right and caption at bottom)
-    m = draw_nagaji(pose=pose, face=face, height=520)
-    img.alpha_composite(m, (30, H - 230 - m.height))
-    subtitle(d, sub, 1150)
+    m = draw_nagaji(pose=pose, face=face, height=780)
+    img.alpha_composite(m, (10, H - 190 - m.height))
+    subtitle(d, sub, 930)
     d.rectangle([0, H-10, W, H], fill=(60, 72, 120)); d.rectangle([0, H-10, W*(i+1)/len(SCENES), H], fill=YEL)
     return img.convert("RGB")
 
