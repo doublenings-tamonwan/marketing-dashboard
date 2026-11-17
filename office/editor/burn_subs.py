@@ -105,6 +105,7 @@ def render_cute(text, font_path, size, path):
 
 
 def main():
+    global PILL_BG, PILL_FG
     ap = argparse.ArgumentParser()
     ap.add_argument("--video", required=True)
     ap.add_argument("--subs", required=True)
@@ -116,7 +117,14 @@ def main():
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--audio", help="ไฟล์เสียงที่จะใส่แทนเสียงเดิม")
     g.add_argument("--mute", action="store_true", help="ใส่แทร็กเสียงเงียบ")
+    ap.add_argument("--pill-bg", help="สีพื้นแถบป้ายคำสำคัญ (hex) ค่าเริ่มต้น #FFD6E7 ชมพู")
+    ap.add_argument("--pill-fg", help="สีตัวหนังสือในแถบป้าย (hex) ค่าเริ่มต้น #7A0E3B")
     a = ap.parse_args()
+    hx = lambda h: tuple(int(h.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+    if a.pill_bg:
+        PILL_BG = hx(a.pill_bg)
+    if a.pill_fg:
+        PILL_FG = hx(a.pill_fg)
 
     clean = a.style == "clean"
     a.font = a.font or ("Prompt-Medium.ttf" if clean else "Itim-Regular.ttf")
