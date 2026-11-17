@@ -27,7 +27,7 @@ fc, labels = [], []
 for i, ((a, b), at) in enumerate(zip(PHRASES, SCENE)):
     fc.append(f"[0:a]atrim={a}:{b},asetpts=PTS-STARTPTS,aformat=channel_layouts=mono,"
               f"asetrate=48000*{PITCH},aresample=48000,atempo={TEMPO / PITCH:.4f},"
-              f"afade=t=in:d=0.03,afade=t=out:st={(b - a) / TEMPO - 0.06:.3f}:d=0.06,adelay={int(at * 1000)}[p{i}]")
+              f"afade=t=in:d=0.03,afade=t=out:st={(b - a) / TEMPO - 0.06:.3f}:d=0.06,adelay=delays={int(at * 1000)}:all=1[p{i}]")
     labels.append(f"[p{i}]")
 fc.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0,highpass=f=90,equalizer=f=250:t=q:w=1:g=-2,"
           "equalizer=f=3500:t=q:w=1:g=3,acompressor=threshold=-20dB:ratio=3:attack=5:release=80,"
@@ -40,5 +40,5 @@ subprocess.run(["python3", os.path.join(ED, "make_music2.py"), "--mood", "lofi",
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", VO, "-i", os.path.join(O, "lofi-v9.wav"),
                 "-i", os.path.join(O, "dubua-ep2-preview-v9-silent.mp4"), "-filter_complex", ";".join(fc),
                 "-map", "2:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
-                os.path.join(O, "dubua-ep2-preview-v10.mp4")], check=True)
+                os.path.join(O, "dubua-ep2-preview-v11.mp4")], check=True)
 print("ok")
