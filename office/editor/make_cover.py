@@ -89,6 +89,9 @@ def main():
     ap.add_argument("--yc", type=float, default=0.5)
     ap.add_argument("--thai-title", action="store_true")
     ap.add_argument("--raw", action="store_true", help="ไม่ปรับโทนอุ่น/สีของรูป")
+    ap.add_argument("--title-color", default="white", help="สีหัวข้อ เช่น #FFE14D")
+    ap.add_argument("--pill-bg", default=None, help="สีพื้นแถบป้าย เช่น #FFE14D")
+    ap.add_argument("--pill-fg", default=None, help="สีตัวหนังสือแถบป้าย")
     a = ap.parse_args()
 
     img = crop916(load(a.photo), a.xc, a.yc, a.raw).convert("RGBA")
@@ -104,7 +107,7 @@ def main():
     tf = font("Prompt-SemiBold.ttf", 120) if a.thai_title else font("PlayfairDisplay-Italic.ttf", 144, 500)
     while d.multiline_textbbox((0, 0), title, font=tf, spacing=4)[2] > W - 120:
         tf = font(os.path.basename(tf.path), tf.size - 6, None if a.thai_title else 500)
-    shadowed(img, (cx, y), title, tf, "white", "ma", blur=24, alpha=110, spacing=4)
+    shadowed(img, (cx, y), title, tf, a.title_color, "ma", blur=24, alpha=110, spacing=4)
     y = d.multiline_textbbox((cx, y), title, font=tf, anchor="ma", spacing=4)[3] + 36
 
     if a.pill:
@@ -112,8 +115,8 @@ def main():
         tw = d.textlength(a.pill, font=pf)
         asc, desc = pf.getmetrics()
         h = asc + desc + 24
-        d.rounded_rectangle((cx - tw / 2 - 48, y, cx + tw / 2 + 48, y + h), radius=h // 2, fill=PILL_BG)
-        d.text((cx, y + h / 2), a.pill, font=pf, fill=PILL_FG, anchor="mm")
+        d.rounded_rectangle((cx - tw / 2 - 48, y, cx + tw / 2 + 48, y + h), radius=h // 2, fill=a.pill_bg or PILL_BG)
+        d.text((cx, y + h / 2), a.pill, font=pf, fill=a.pill_fg or PILL_FG, anchor="mm")
 
     if a.footer:
         shadowed(img, (cx, H - 276), a.footer, font("PlayfairDisplay-Italic.ttf", 45, 500),
