@@ -15,7 +15,8 @@ def remap(t):
     return NEW[-1]
 st.CUTS = [remap(c) for c in st.CUTS]
 st.S = [(remap(a), remap(b), *rest) for a, b, *rest in st.S]
-st.main(os.path.join(O, "dubua-ep2-preview-v9-nostk.mp4"), os.path.join(O, "dubua-ep2-preview-v9-silent.mp4"))
+if not os.path.exists(os.path.join(O, "dubua-ep2-preview-v9-silent.mp4")):
+    st.main(os.path.join(O, "dubua-ep2-preview-v9-nostk.mp4"), os.path.join(O, "dubua-ep2-preview-v9-silent.mp4"))
 
 # วลีในไฟล์เสียง (จับจากช่วงเงียบ) → วางต้นฉากที่ตรงกัน
 PHRASES = [(5.55, 8.33), (8.63, 11.84), (12.15, 16.04), (16.20, 19.21), (19.40, 23.72), (23.79, 26.15), (27.26, 31.67)]
@@ -31,13 +32,13 @@ for i, ((a, b), at) in enumerate(zip(PHRASES, SCENE)):
 fc.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0,highpass=f=90,equalizer=f=250:t=q:w=1:g=-2,"
           "equalizer=f=3500:t=q:w=1:g=3,acompressor=threshold=-20dB:ratio=3:attack=5:release=80,"
           f"loudnorm=I=-15:TP=-1.5,apad,atrim=0:{total},asplit[vo][key]")
-fc.append(f"[1:a]volume=0.55,atrim=0:{total}[mu]")
-fc.append("[mu][key]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=300[duck]")
+fc.append(f"[1:a]volume=0.28,atrim=0:{total}[mu]")
+fc.append("[mu][key]sidechaincompress=threshold=0.01:ratio=10:attack=15:release=350[duck]")
 fc.append("[duck][vo]amix=inputs=2:normalize=0,alimiter=limit=0.9[aout]")
 subprocess.run(["python3", os.path.join(ED, "make_music2.py"), "--mood", "lofi", "--duration", str(total),
                 "--out", os.path.join(O, "lofi-v9.wav")], check=True)
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", VO, "-i", os.path.join(O, "lofi-v9.wav"),
                 "-i", os.path.join(O, "dubua-ep2-preview-v9-silent.mp4"), "-filter_complex", ";".join(fc),
                 "-map", "2:v", "-map", "[aout]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
-                os.path.join(O, "dubua-ep2-preview-v9.mp4")], check=True)
+                os.path.join(O, "dubua-ep2-preview-v10.mp4")], check=True)
 print("ok")
