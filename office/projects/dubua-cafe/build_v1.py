@@ -8,7 +8,8 @@
   และต้องแปลง HDR → SDR (zscale + tonemap hable) ไม่งั้นสีซีด/จืด
 - ช่วงที่ใช้เลือกจากการดูเฟรมจริง + วัดการสั่นของภาพ (ไม่ใช่ช่วงประมาณในสคริปต์ทุกช็อต)
 - ช็อตที่ภาพนิ่งสั้นกว่าท่อน (2747 เพื่อนยืนมองร้าน, 2740 ป้ายกาดบ้านควาย) ยืดเป็นสโลว์นิด ๆ (~0.76x)
-- วิ้งเฉพาะท่อน 1 และท่อน 5 (ตามสคริปต์) · แสงฟุ้ง 0.2 ทั้งคลิปยกเว้นการ์ดท้าย (ให้ตัวหนังสือคม)
+- เจ้าของช่องสั่ง (2026-11-17): ไม่ใส่ฟิลเตอร์ใด ๆ — ไม่มีแสงฟุ้ง ไม่ปรับโทนอุ่น/สี ไม่มีวิ้ง
+  ใช้ภาพตามต้นฉบับ (มีแค่การแปลง HDR→SDR ซึ่งจำเป็น ไม่งั้นภาพซีดผิดจากที่เห็นในมือถือ)
 """
 import argparse
 import json
@@ -40,7 +41,7 @@ def run(*args):
 
 
 TM = ("zscale=t=linear:npl=203,format=gbrpf32le,zscale=p=bt709,tonemap=hable:desat=0,"
-      "zscale=t=bt709:m=bt709:r=tv,format=yuv420p,eq=gamma=1.12:saturation=1.05")
+      "zscale=t=bt709:m=bt709:r=tv,format=yuv420p")
 FIT = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,format=yuv420p,setsar=1"
 
 # (ไฟล์, เริ่มในไฟล์, ความยาวต้นฉบับ, ความยาวในคลิป)
@@ -52,7 +53,7 @@ SHOTS = [
     ("c9c98111-IMG_2752.mov", 2.0, 1.5, 1.5),   # 5a ตู้เค้ก (ช่วงท้ายที่ภาพนิ่ง)
     ("1135d74b-IMG_2753.mov", 0.3, 1.0, 1.0),   # 5b ตู้มาการง
     ("4d791dc7-IMG_2740.mov", 0.0, 1.9, 2.5),   # 6 ป้ายกาดบ้านควาย (หลัง ~1.9 วิ กล้องแพนออก)
-    ("95bcdcf9-IMG_2736.mov", 0.8, 2.0, 2.0),   # 7 ทางเดินร่มไม้ รั้วไม้ขาว
+    ("95bcdcf9-IMG_2736.mov", 0.4, 2.0, 2.0),   # 7 ทางเดินร่มไม้ รั้วไม้ขาว (จบก่อนเพื่อนเดินเข้าเฟรมใกล้ ๆ ที่ ~2.5 วิ)
 ]
 CARD = 2.5
 
@@ -66,9 +67,8 @@ for i, (f, ss, src_d, out_d) in enumerate(SHOTS):
     names.append(out)
 open("list.txt", "w").write("".join(f"file '{n}'\n" for n in names))
 run("ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "base.mp4")
-run("bash", os.path.join(ED, "glow.sh"), "base.mp4", "base-glow.mp4")
 
-# ---------- การ์ดท้าย (ไม่ใส่แสงฟุ้ง ให้ตัวหนังสือคม) ----------
+# ---------- การ์ดท้าย ----------
 run("ffmpeg", "-nostdin", "-v", "error", "-y", "-ss", 2.0, "-i", U + "c7350462-IMG_2749.mov",
     "-vf", f"{TM},{FIT}", "-frames:v", "1", "cardbg.png")
 bg = Image.open("cardbg.png").convert("RGB").filter(ImageFilter.GaussianBlur(20))
@@ -141,23 +141,22 @@ for s, dd in zip(subs, seg):
     starts.append(round(t, 2))
     t += dd
 total = round(t + CARD, 2)
+# ซับบน (หลบหน้า/ป้าย): ท่อน 1 ซับล่างทับคางเจ้าของช่อง, ท่อน 2 ทับหลังเพื่อน (บนเป็นท้องฟ้าโล่ง),
+# ท่อน 6 ซับล่างทับตัวหนังสือบนป้ายกาดบ้านควาย
+for i in (0, 1, 5):
+    subs[i]["pos"] = "top"
 json.dump(subs, open("subs-v1.json", "w"), ensure_ascii=False, indent=1)
 
-# วิ้ง: ทำทั้งคลิปแล้วเลือกใช้เฉพาะท่อน 1 และท่อน 5
-run("python3", os.path.join(ED, "sparkles.py"), "--video", "base-glow.mp4", "--out", "base-sp.mp4",
-    "--bursts", f"0.1,{starts[4]}")
-s5, e5 = starts[4], starts[5]
-run("ffmpeg", "-nostdin", "-v", "error", "-y", "-i", "base-glow.mp4", "-i", "base-sp.mp4", "-i", "card.mp4",
-    "-filter_complex",
-    f"[0:v][1:v]overlay=enable='between(t,0,{starts[1]})+between(t,{s5},{e5})'[fx];"
-    "[fx][2:v]concat=n=2:v=1:a=0,format=yuv420p[v]",
-    "-map", "[v]", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "base-fx.mp4")
+# ต่อการ์ดท้าย (ไม่มีแสงฟุ้ง/วิ้ง ตามที่เจ้าของช่องสั่ง)
+run("ffmpeg", "-nostdin", "-v", "error", "-y", "-i", "base.mp4", "-i", "card.mp4",
+    "-filter_complex", "[0:v][1:v]concat=n=2:v=1:a=0,format=yuv420p[v]",
+    "-map", "[v]", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "base-card.mp4")
 
 # ดนตรีแต่งเอง (ชิล) + ป๊อปเบา ๆ ตอนซับเปลี่ยน
 run("python3", os.path.join(ED, "make_music.py"), "--mood", "chill", "--duration", total,
     "--out", "music.wav", "--pops", ",".join(str(x) for x in starts[1:]))
 
-run("python3", os.path.join(ED, "burn_subs.py"), "--video", "base-fx.mp4", "--subs", "subs-v1.json",
+run("python3", os.path.join(ED, "burn_subs.py"), "--video", "base-card.mp4", "--subs", "subs-v1.json",
     "--out", os.path.join(OUT, "dubua-ep2-preview.mp4"), "--audio", "music.wav")
 
 # ---------- หน้าปก: เฟรมเซลฟี่ยิ้ม ----------
@@ -165,5 +164,5 @@ run("ffmpeg", "-nostdin", "-v", "error", "-y", "-ss", 3.3, "-i", U + "4e6a7915-I
     "-vf", TM, "-frames:v", "1", "cover-src.png")
 run("python3", os.path.join(ED, "make_cover.py"), "--photo", "cover-src.png",
     "--out", os.path.join(OUT, "dubua-ep2-cover.jpg"), "--kicker", "พามารีวิว · EP.2",
-    "--title", "Lotus Pond Café", "--pill", "คาเฟ่ริมบึงบัว นครปฐม", "--yc", 0.5)
+    "--title", "Lotus Pond Café", "--pill", "คาเฟ่ริมบึงบัว นครปฐม", "--yc", 0.5, "--raw")
 print("starts", starts, "total", total)

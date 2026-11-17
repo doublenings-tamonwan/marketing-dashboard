@@ -36,7 +36,7 @@ def load(path):
     return ImageOps.exif_transpose(Image.open(path)).convert("RGB")
 
 
-def crop916(im, xc, yc):
+def crop916(im, xc, yc, raw=False):
     iw, ih = im.size
     ch, cw = ih, int(ih * 9 / 16)
     if cw > iw:
@@ -44,6 +44,8 @@ def crop916(im, xc, yc):
     x0 = min(max(int(xc * iw - cw / 2), 0), iw - cw)
     y0 = min(max(int(yc * ih - ch / 2), 0), ih - ch)
     im = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((W, H), Image.LANCZOS)
+    if raw:  # --raw: ไม่ปรับโทนอุ่น/สี ใช้สีตามรูปต้นฉบับ
+        return im
     im = ImageEnhance.Color(im).enhance(0.95)
     r, g, b = im.split()
     return Image.merge("RGB", (r.point(lambda v: min(255, v + 6)), g,
@@ -86,9 +88,10 @@ def main():
     ap.add_argument("--xc", type=float, default=0.5)
     ap.add_argument("--yc", type=float, default=0.5)
     ap.add_argument("--thai-title", action="store_true")
+    ap.add_argument("--raw", action="store_true", help="ไม่ปรับโทนอุ่น/สีของรูป")
     a = ap.parse_args()
 
-    img = crop916(load(a.photo), a.xc, a.yc).convert("RGBA")
+    img = crop916(load(a.photo), a.xc, a.yc, a.raw).convert("RGBA")
     img.alpha_composite(scrim())
     d = ImageDraw.Draw(img)
     cx, y = W // 2, 288
