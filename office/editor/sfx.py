@@ -1,7 +1,8 @@
 """เสียงประกอบสังเคราะห์เอง (ไม่ติดลิขสิทธิ์) — ทำแทร็กเสียงประกอบทั้งคลิปทีเดียว
 python3 sfx.py --duration 59.1 --out sfx.wav --cues "whoosh@0.3,hit@8.5,chime@25,tale@32.8,slip@41.5,fail@48,bell@54.6"
 เสียงที่มี: whoosh (วู้บ), hit (ตึ่ง! ตกใจ), chime (ระฆังอบอุ่น), tale (ฟิ้ว~ เปิดนิทาน+คลื่น), slip (ซื้ด~ ลื่น),
-          fail (ป๊าบ ป๊าบ ป๊าบ~ เกมแพ้), bell (คลิก+กระดิ่งกดติดตาม)
+          fail (ป๊าบ ป๊าบ ป๊าบ~ เกมแพ้), bell (คลิก+กระดิ่งกดติดตาม),
+          pop (ป๊อป อีโมจิเด้ง), boing (ดึ๋ง), sparkle (วิ้ง ๆ), yay (เย้! คนเชียร์ + แตร + พลุกระดาษ)
 """
 import argparse, wave
 import numpy as np
@@ -78,7 +79,50 @@ def bell():
         a = ding(f0, 1.3, amp); s = int(SR * st); out[s:s + len(a)] += a[:len(out) - s]
     return out
 
-SOUNDS = dict(whoosh=whoosh, hit=hit, chime=chime, tale=tale, slip=slip, fail=fail, bell=bell)
+def pop():
+    t = _t(0.12)
+    f = 900 * np.exp(-t * 18) + 300
+    return _norm(np.sin(2 * np.pi * np.cumsum(f) / SR) * _env(t, 0.001, 35), 0.35)
+
+def boing():
+    t = _t(0.6)
+    f = 180 + 120 * np.sin(2 * np.pi * 9 * t) * np.exp(-t * 4) + 80 * np.exp(-t * 6)
+    return _norm(np.sin(2 * np.pi * np.cumsum(f) / SR) * _env(t, 0.003, 4.5), 0.4)
+
+def sparkle():
+    t = _t(0.9); y = np.zeros(len(t))
+    for i, f0 in enumerate([1760, 2349, 2637, 3136]):
+        s = int(SR * 0.06 * i); tt = t[:len(t) - s]
+        y[s:] += np.sin(2 * np.pi * f0 * tt) * _env(tt, 0.002, 6)
+    return _norm(y, 0.28)
+
+def yay():
+    """เสียงคนเชียร์ "เย้!" (สังเคราะห์ formant หลายเสียง) + แตรปาร์ตี้ + พลุกระดาษ"""
+    dur = 1.4; t = _t(dur); y = np.zeros(len(t))
+    r = np.random.default_rng(11)
+    for v in range(7):
+        st = r.uniform(0, 0.08); f0 = r.uniform(210, 340); d = r.uniform(0.75, 1.05)
+        tt = t - st; m = (tt > 0) & (tt < d)
+        p = f0 * (1 + 0.25 * np.clip(tt / 0.15, 0, 1) - 0.12 * np.clip((tt - 0.4) / 0.6, 0, 1))  # เสียงขึ้นแล้วลง
+        ph = 2 * np.pi * np.cumsum(np.where(m, p, 0)) / SR
+        F1 = 380 + 300 * np.clip(tt / 0.12, 0, 1); F2 = 2300 - 450 * np.clip(tt / 0.12, 0, 1)  # ย → เ
+        src = np.zeros(len(t))
+        for h in range(1, 16):
+            fh = p * h
+            amp = np.exp(-((fh - F1) / 160) ** 2) + 0.6 * np.exp(-((fh - F2) / 220) ** 2) + 0.15 * np.exp(-((fh - 3000) / 300) ** 2)
+            src += amp * np.sin(h * ph)
+        env = np.where(m, np.minimum(1, tt / 0.03) * np.minimum(1, (d - tt) / 0.25), 0)
+        y += src * env * (1 + 0.05 * np.sin(2 * np.pi * 5.5 * tt))
+    y = _norm(y, 1.0)
+    horn_t = _t(0.55); hf = 520 + 160 * (horn_t / 0.55)
+    horn = np.sign(np.sin(2 * np.pi * np.cumsum(hf) / SR)) * np.minimum(1, horn_t / 0.02) * np.minimum(1, (0.55 - horn_t) / 0.1)
+    y[:len(horn)] += 0.18 * horn
+    for k in range(10):
+        s0 = int(SR * r.uniform(0.05, 0.9)); c = _bandnoise(int(SR * 0.03), 2000, 8000) * np.exp(-_t(0.03) * 120)
+        y[s0:s0 + len(c)] += 0.25 * c / (np.abs(c).max() + 1e-9)
+    return _norm(y, 0.55)
+
+SOUNDS = dict(pop=pop, boing=boing, sparkle=sparkle, yay=yay, whoosh=whoosh, hit=hit, chime=chime, tale=tale, slip=slip, fail=fail, bell=bell)
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

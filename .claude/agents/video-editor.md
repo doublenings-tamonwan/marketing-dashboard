@@ -37,7 +37,9 @@ tools: Read, Write, Edit, Bash, Glob, Grep
    - แสงฟุ้ง + โทนอุ่น (สไตล์ประจำช่อง): `bash office/editor/glow.sh base.mp4 base-glow.mp4` (ค่าเริ่มต้น 0.2; 0.35 ฟุ้งไป)
    - วิ้ง ๆ: `python3 office/editor/sparkles.py --video base-glow.mp4 --out base-fx.mp4 --bursts <เวลาซับเปลี่ยน>`
      ใช้ค่าเริ่มต้น (density 2, ซับละ 3 ดวง) — เจ้าของช่องบอกว่าวิ้งเยอะ (density 6, ซับละ 7 ดวง + boost) **เยอะไป**
-   - ลำดับ: แสงฟุ้ง → วิ้ง → ซับ
+   - ลำดับ: แสงฟุ้ง → วิ้ง → อีโมจิ → ซับ
+   - อีโมจิเด้ง + พลุกระดาษ: `python3 office/editor/emoji_pops.py --video base.mp4 --cues emoji-cues.json --out base-emoji.mp4` (ตัวอย่าง: `weeks/2026-W46/clip2-ai-trick/emoji-cues.json`) วางให้ไม่ทับซับ/หน้าคน
+   - เสียงประกอบ (สังเคราะห์เอง ไม่ติดลิขสิทธิ์): `python3 office/editor/sfx.py --duration <วิ> --cues "whoosh@0.05,yay@9.8,bell@22.9" --out sfx.wav` แล้ว amix ที่ 0.5 ใต้เสียงพากย์ — ใส่เฉพาะจุดสำคัญ (เจ้าของช่องไม่ชอบเสียงตึ่งทุกครั้งที่เปลี่ยนช็อต)
    - รูปนิ่งในคลิป: ทำเป็นช็อต 2 วิ ซูมเข้าช้า ๆ 10% + แฟลชขาว 5 เฟรมแรก (เรนเดอร์เฟรมด้วย Pillow แล้วส่งเข้า ffmpeg) — ไฟล์ HEIC เปิดด้วย `pillow-heif`
    - ใส่เอฟเฟกต์ **ก่อน** ซับเสมอ เพื่อให้ซับอยู่บนสุด
 7. **รวม**: concat ช็อต (`-c copy`) เป็น `base.mp4` (หรือใช้ `base-fx.mp4`) แล้ว
