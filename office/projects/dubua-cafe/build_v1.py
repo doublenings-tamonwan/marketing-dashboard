@@ -152,9 +152,9 @@ run("ffmpeg", "-nostdin", "-v", "error", "-y", "-i", "base.mp4", "-i", "card.mp4
     "-filter_complex", "[0:v][1:v]concat=n=2:v=1:a=0,format=yuv420p[v]",
     "-map", "[v]", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "base-card.mp4")
 
-# ดนตรีแต่งเอง (ชิล) + ป๊อปเบา ๆ ตอนซับเปลี่ยน
-run("python3", os.path.join(ED, "make_music.py"), "--mood", "chill", "--duration", total,
-    "--out", "music.wav", "--pops", ",".join(str(x) for x in starts[1:]))
+# ดนตรีแต่งเอง แบบน่ารัก (cute) ไม่มีเสียงป๊อป — เจ้าของช่องขอ 2026-11-17 (v2)
+run("python3", os.path.join(ED, "make_music.py"), "--mood", "cute", "--seed", "7", "--duration", total,
+    "--out", "music.wav")
 
 run("python3", os.path.join(ED, "burn_subs.py"), "--video", "base-card.mp4", "--subs", "subs-v1.json",
     "--out", os.path.join(OUT, "dubua-ep2-preview.mp4"), "--audio", "music.wav")
