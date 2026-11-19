@@ -1,4 +1,4 @@
-"""Storyboard: ทำไมในซีรีส์เกาหลี วันเกิดต้องกินซุปสาหร่าย? (มาสคอต น้องนางาจิ)"""
+"""Storyboard: ทำไมในซีรีส์เกาหลี วันเกิดต้องกินซุปสาหร่าย? (มาสคอต น้องนางางิ)"""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../editor"))
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -164,7 +164,7 @@ def main(out):
     W_, H_ = W, H
     can = Image.new("RGB", (W_, H_), CREAM)
     d = ImageDraw.Draw(can)
-    d.text((M, 50), "Storyboard v2 · น้องนางาจิเล่าเรื่อง EP.1", font=font("Prompt-SemiBold.ttf", 64), fill=NAVY)
+    d.text((M, 50), "Storyboard v2 · น้องนางางิเล่าเรื่อง EP.1", font=font("Prompt-SemiBold.ttf", 64), fill=NAVY)
     d.text((M, 140), "ทำไมในซีรีส์เกาหลี วันเกิดต้องกินซุปสาหร่าย?   ·   ยาว ~55 วิ   ·   โทนกรมท่า-เหลือง-ปะการัง   ·   เสียงพากย์: เจ้าของช่องอัดเอง (บทเป็นแนวทาง พูดตามสบาย)",
            font=font("Prompt-Medium.ttf", 32), fill=INK)
     fb = font("Prompt-SemiBold.ttf", 30); fv = font("Prompt-Medium.ttf", 27); fn = font("Prompt-Medium.ttf", 24)

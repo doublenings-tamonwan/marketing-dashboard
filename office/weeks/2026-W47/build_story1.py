@@ -1,4 +1,4 @@
-"""ประกอบคลิป ซีรีส์ไม่ได้บอก EP.1 จากเสียงพากย์ 3 ไฟล์ + ฉากหลัง AI + น้องนางาจิชุดนักเรียน
+"""ประกอบคลิป ซีรีส์ไม่ได้บอก EP.1 จากเสียงพากย์ 3 ไฟล์ + ฉากหลัง AI + น้องนางางิชุดนักเรียน
 python3 build_story1.py <workdir with vo1.wav vo2.wav vo3.wav>
 ผลลัพธ์ในworkdir: vo.wav, base.mp4, subs.json, scenes.json
 """
