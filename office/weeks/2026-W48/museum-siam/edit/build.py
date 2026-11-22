@@ -64,6 +64,12 @@ def ease(p):
     return p * p * (3 - 2 * p)
 
 
+def zcurve(i, n, zoom, punch):
+    if punch:  # ซูมกระแทก: เข้าเต็มใน 0.15 วิ แล้วค้าง
+        return 1 + (zoom - 1) * ease(min(1.0, i / (0.15 * FPS)))
+    return 1 + (zoom - 1) * ease(i / max(1, n - 1))
+
+
 def flash(im, i, nflash=5):
     if i >= nflash:
         return im
@@ -71,7 +77,7 @@ def flash(im, i, nflash=5):
     return Image.blend(im, Image.new("RGB", im.size, (255, 255, 255)), a)
 
 
-def still_full(out, path, dur, xc, yc, zoom, fx, fy, do_flash=True):
+def still_full(out, path, dur, xc, yc, zoom, fx, fy, do_flash=True, punch=False):
     """9:16 crop + slow zoom toward (fx,fy) (0-1 of image) + white flash first 5 frames"""
     im = load(path)
     iw, ih = im.size
@@ -80,7 +86,7 @@ def still_full(out, path, dur, xc, yc, zoom, fx, fy, do_flash=True):
 
     def gen():
         for i in range(n):
-            z = 1 + (zoom - 1) * ease(i / (n - 1))
+            z = zcurve(i, n, zoom, punch)
             box = zoom_rect(rect, z, fx * iw, fy * ih, im)
             fr = im.resize((W, H), Image.LANCZOS, box=box)
             yield flash(fr, i) if do_flash else fr
@@ -99,7 +105,7 @@ def selfie_layout(band_top, band_h, xc=0.46):
     return im, rect, bg
 
 
-def selfie_shot(out, dur, band_top=110, band_h=880, zoom=1.08):
+def selfie_shot(out, dur, band_top=110, band_h=880, zoom=1.08, punch=False):
     im, rect, bg = selfie_layout(band_top, band_h)
     iw, ih = im.size
     n = round(dur * FPS)
@@ -107,11 +113,33 @@ def selfie_shot(out, dur, band_top=110, band_h=880, zoom=1.08):
 
     def gen():
         for i in range(n):
-            z = 1 + (zoom - 1) * ease(i / (n - 1))
+            z = zcurve(i, n, zoom, punch)
             box = zoom_rect(rect, z, fx, fy, im)
             band = im.resize((W, band_h), Image.LANCZOS, box=box)
             fr = bg.copy()
             fr.paste(band, (0, band_top))
+            yield fr
+    frames_to_mp4(out, gen(), n)
+
+
+def selfie_punch(out, dur, band_top=110, band_h=880, zoom=1.15):
+    """ซูมกระแทกแบบไม่ตัดเพื่อน: แถบภาพเริ่มเล็ก (1/zoom) แล้วขยายเต็มกว้างใน 0.15 วิ แล้วค้าง
+    จุดหน้าเจ้าของช่องอยู่ที่เดิมบนจอ"""
+    im, rect, bg = selfie_layout(band_top, band_h)
+    x0, y0, cw, ch = rect
+    band = im.resize((W, band_h), Image.LANCZOS, box=(x0, y0, x0 + cw, y0 + ch))
+    iw, ih = im.size
+    ax = (0.44 * iw - x0) / cw * W          # owner face on screen (final)
+    ay = band_top + (0.45 * ih - y0) / ch * band_h
+    n = round(dur * FPS)
+    # ขอบแถบนุ่มด้วยเงา
+    def gen():
+        for i in range(n):
+            sc = (1 / zoom) * zcurve(i, n, zoom, True)
+            bw, bh = round(W * sc), round(band_h * sc)
+            b = band.resize((bw, bh), Image.LANCZOS) if sc < 0.999 else band
+            px = round(ax - (ax / W) * bw); py = round(ay - (ay - band_top) / band_h * bh)
+            fr = bg.copy(); fr.paste(b, (px, py))
             yield fr
     frames_to_mp4(out, gen(), n)
 
@@ -283,39 +311,50 @@ def make_card(path):
 
 
 def clip3():
+    """v2 (22 พ.ย.): เปิดรัว 1 วิ -> เซลฟี่ซูมกระแทก -> ... ทุกช็อต <= 2 วิ ยกเว้นการ์ด 5 วิ"""
     d = f"{OUT}/clip3"; os.makedirs(d, exist_ok=True)
-    selfie_shot(f"{d}/s1.mp4", 2.0)
+    m = 5 / FPS  # 5 เฟรม = 0.167 วิ ต่อภาพ
+    vshot(f"{d}/m1.mp4", "0736", 1.0, m)
+    still_full(f"{d}/m2.mp4", f"{U}/b0c09462-image.jpg", m, xc=0.52, yc=0.5, zoom=1.0, fx=0.53, fy=0.33, do_flash=False)
+    vshot(f"{d}/m3.mp4", "0751", 0.5, m)
+    vshot(f"{d}/m4.mp4", "0765", 3.5, m)
+    vshot(f"{d}/m5.mp4", "0726", 0.5, m)
+    vshot(f"{d}/m6.mp4", "0757", 10.5, m)
+    selfie_punch(f"{d}/s1.mp4", 2.0, zoom=1.15)
     vshot(f"{d}/s2.mp4", "0736", 0.0, 1.5)
-    still_full(f"{d}/s3.mp4", f"{U}/b0c09462-image.jpg", 1.5, xc=0.52, yc=0.5, zoom=1.10, fx=0.53, fy=0.33)
+    still_full(f"{d}/s3.mp4", f"{U}/b0c09462-image.jpg", 1.5, xc=0.52, yc=0.5, zoom=1.2, fx=0.53, fy=0.30,
+               do_flash=False, punch=True)
     vshot(f"{d}/s4.mp4", "0729", 0.0, 1.5)
     vshot(f"{d}/s5.mp4", "0751", 0.0, 1.5)
     vshot(f"{d}/s6.mp4", "0765", 1.8, 1.5)
     vshot(f"{d}/s7.mp4", "0757", 8.0, 5.0, extra="gblur=sigma=26,eq=brightness=-0.06:saturation=0.9")
-    concat([f"{d}/s{i}.mp4" for i in range(1, 8)], f"{d}/base.mp4")
+    parts = [f"{d}/m{i}.mp4" for i in range(1, 7)] + [f"{d}/s{i}.mp4" for i in range(1, 8)]
+    concat(parts, f"{d}/base.mp4")
     glow(d, "base.mp4", "base-glow.mp4", 0.2)
-    bursts = "0,2.0,3.5,5.0,6.5,8.0,9.5"
+    O = 1.0  # เลื่อนทุกอย่างหลังช่วงรัว
+    CARD = 10.5
+    bursts = ",".join(str(round(t + O, 2)) for t in (0, 2.0, 3.5, 5.0, 6.5, 8.0, 9.5))
     run(["python3", f"{ED}/sparkles.py", "--video", f"{d}/base-glow.mp4", "--out", f"{d}/base-fx.mp4",
          "--bursts", bursts])
     make_badge(f"{d}/badge.png")
     y0, y1, vs = make_card(f"{d}/card.png")
     print("card", y0, y1, "value font", vs)
-    # card pops in at 9.5: fade + rise 40px over 0.25s; badge whole clip
     run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", f"{d}/base-fx.mp4", "-loop", "1", "-i", f"{d}/badge.png",
          "-loop", "1", "-t", "5.0", "-i", f"{d}/card.png", "-filter_complex",
-         "[2:v]format=rgba,fade=in:st=0:d=0.25:alpha=1,setpts=PTS+9.5/TB[c];"
+         f"[2:v]format=rgba,fade=in:st=0:d=0.25:alpha=1,setpts=PTS+{CARD}/TB[c];"
          "[0:v][1:v]overlay=0:0:shortest=1[b];"
-         "[b][c]overlay=x=0:y='max(0\\,(9.75-t)*160)':eof_action=pass:eval=frame,format=yuv420p[v]",
+         f"[b][c]overlay=x=0:y='max(0\\,({CARD + 0.25}-t)*160)':eof_action=pass:eval=frame,format=yuv420p[v]",
          "-map", "[v]", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-an", f"{d}/base-card.mp4"])
     write_subs(d, [
-        {"start": 0.0, "end": 2.0, "text": "พามารีวิว… [ว้าวทุกห้อง]!\nมิวเซียมสยาม"},
-        {"start": 2.0, "end": 3.5, "text": "งาน[ทอง]\nผนังลายไทยแดงทั้งห้อง"},
-        {"start": 3.5, "end": 5.0, "text": "นางกวัก[ไซซ์ยักษ์]\nกวักให้มาเที่ยว"},
-        {"start": 5.0, "end": 6.5, "text": "เข้าโซน\n[ไทยแปลไทย]"},
-        {"start": 6.5, "end": 8.0, "text": "ตุ๊กตา[ชุดไทย]\nครบทุกสี"},
-        {"start": 8.0, "end": 9.5, "text": "โต๊ะที่[ส้มตำ]\nโผล่ขึ้นมาเอง"},
-        {"start": 9.5, "end": 14.5, "text": "[เซฟ]ไว้ไปวันหยุด"},
+        {"start": 1.0, "end": 3.0, "text": "พามารีวิว… [ว้าวทุกห้อง]!\nมิวเซียมสยาม"},
+        {"start": 3.0, "end": 4.5, "text": "งาน[ทอง]\nผนังลายไทยแดงทั้งห้อง"},
+        {"start": 4.5, "end": 6.0, "text": "นางกวัก[ไซซ์ยักษ์]\nกวักให้มาเที่ยว", "y": 1120},
+        {"start": 6.0, "end": 7.5, "text": "เข้าโซน\n[ไทยแปลไทย]"},
+        {"start": 7.5, "end": 9.0, "text": "ตุ๊กตา[ชุดไทย]\nครบทุกสี"},
+        {"start": 9.0, "end": 10.5, "text": "โต๊ะที่[ส้มตำ]\nโผล่ขึ้นมาเอง"},
+        {"start": 10.5, "end": 15.5, "text": "[เซฟ]ไว้ไปวันหยุด"},
     ])
-    audio(d, 14.5, "chill", [0.0, 3.5, 9.0, 9.5], "whoosh@1.8,whoosh@3.3")
+    audio(d, 15.5, "chill", [1.0, 4.5, 10.0, 10.5], "whoosh@0.8,whoosh@2.8,whoosh@4.3")
     burn(d, "base-card.mp4", "clip3-museum-ep2")
 
 
