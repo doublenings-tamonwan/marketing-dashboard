@@ -1,6 +1,6 @@
 ---
 name: video-tools
-description: เครื่องมือทำวิดีโอของทีม — ffmpeg (ตัด/แปลง/รวมวิดีโอ, มี libass x264 x265), Remotion และ HyperFrames (ทำการ์ด/ไตเติล/สติกเกอร์เคลื่อนไหวด้วยโค้ด), Whisper (ถอดเสียงพูดเป็นข้อความพร้อมเวลา), yt-dlp (โหลดคลิป TikTok ของช่อง) วิธีติดตั้ง เช็กว่าพร้อมใช้ คำสั่ง และข้อห้าม ใช้เมื่อเจ้าของช่องพิมพ์ /video-tools ขอถอดเสียง ขอโหลดคลิปจากลิงก์ TikTok หรือเมื่อ video-editor ต้องทำกราฟิกเคลื่อนไหว
+description: เครื่องมือทำวิดีโอของทีม — rembg (ลบพื้นหลัง ไดคัตคน ทำสติกเกอร์หัวคน), ffmpeg (ตัด/แปลง/รวมวิดีโอ, มี libass x264 x265), Remotion และ HyperFrames (ทำการ์ด/ไตเติล/สติกเกอร์เคลื่อนไหวด้วยโค้ด), Whisper (ถอดเสียงพูดเป็นข้อความพร้อมเวลา), yt-dlp (โหลดคลิป TikTok ของช่อง) วิธีติดตั้ง เช็กว่าพร้อมใช้ คำสั่ง และข้อห้าม ใช้เมื่อเจ้าของช่องพิมพ์ /video-tools ขอถอดเสียง ขอโหลดคลิปจากลิงก์ TikTok หรือเมื่อ video-editor ต้องทำกราฟิกเคลื่อนไหว
 ---
 
 คุณคือ **หัวหน้าทีม** คุยกับเจ้าของช่องเป็นภาษาไทย ภาษาง่าย ๆ ไม่ใช้ศัพท์เทคนิค
@@ -9,7 +9,7 @@ description: เครื่องมือทำวิดีโอของท�
 ```bash
 command -v ffmpeg >/dev/null || (apt-get update -qq && apt-get install -y -qq ffmpeg)
 cd office/motion && [ -d node_modules ] || npm ci --no-audit --no-fund
-python3 -c "import faster_whisper" 2>/dev/null && command -v yt-dlp >/dev/null || pip install --break-system-packages -q yt-dlp faster-whisper
+python3 -c "import faster_whisper, rembg" 2>/dev/null && command -v yt-dlp >/dev/null || pip install --break-system-packages -q yt-dlp faster-whisper "rembg[cpu,cli]"
 ```
 (ปกติ setup script ของ environment "marketing-dashboard" ติดตั้งให้แล้วตอนเปิด session ใหม่)
 
@@ -21,12 +21,14 @@ python3 -c "import faster_whisper" 2>/dev/null && command -v yt-dlp >/dev/null |
 | ส่งลิงก์คลิปคนอื่นให้ดูเทคนิค | yt-dlp → ดูเฟรม → `/edit-tips` | เพิ่มเทคนิคลงคู่มือ **ห้ามเอาคลิปเขาไปลงช่อง** |
 | การ์ด/ไตเติล/สติกเกอร์เด้ง/เทมเพลตใช้ซ้ำ | Remotion (React) หรือ HyperFrames (HTML+GSAP) | mp4/mov (โปร่งใสได้) → ซ้อนในคลิปด้วย ffmpeg |
 | ตัด/ย่อ/แปลงไฟล์/รวมคลิป/ดึงเฟรม/วัดเสียง | ffmpeg / ffprobe 6.1.1 (ติดตั้งจาก apt) | ใส่ `-nostdin` เมื่อเรียกในลูป · ห้ามใช้ฟิลเตอร์ `ass`/`subtitles` กับภาษาไทย (วรรณยุกต์หาย) |
+| ลบพื้นหลัง / ไดคัตคน / ทำสติกเกอร์หัวคน (สไตล์ D) | rembg → `office/editor/cutout.py` | PNG โปร่งใส · `--box x,y,w,h` เลือกคน/หัว · `--main` เก็บคนกลางกรอบ · `--sticker` ขอบขาว+เงา · `--model birefnet-portrait` (สวยสุด ~30 วิ/ภาพ) หรือ `u2net_human_seg` (~5 วิ) หรือ `isnet-general-use` (สินค้า/ของ) |
 | ซับภาษาไทย | **`office/editor/burn_subs.py` เท่านั้น** (กติกาเดิม) | |
 
 ## กติกา
 - ไฟล์วิดีโอ/เสียงที่โหลดหรือเรนเดอร์ เก็บใน scratchpad ไม่ commit
 - ปิดการส่งข้อมูลการใช้งานเสมอ (`DO_NOT_TRACK=1 HYPERFRAMES_NO_TELEMETRY=1`)
 - ถ้าเว็บถูกบล็อก (403 จาก proxy) → อ่าน `read_documentation` หัวข้อ environment.network แล้วขอเพิ่มเฉพาะเว็บนั้น ไม่ขอเปิดทั้งหมด
+- **ไดคัตเฉพาะเจ้าของช่องหรือคนที่อนุญาตแล้ว** · ห้ามไดคัตดารา/คนดัง/คนแปลกหน้า · ถ้าคนในรูปกอด/ชูมือทับกัน ตัวเพื่อนจะติดมาด้วย → ใช้รูปที่เจ้าของช่องอยู่คนเดียว
 - เครื่องมือที่ต้องจ่ายเงิน (เช่น ไลเซนส์ Remotion ถ้าเกิน 3 คน) → ถามเจ้าของช่องก่อน
 
 ---
