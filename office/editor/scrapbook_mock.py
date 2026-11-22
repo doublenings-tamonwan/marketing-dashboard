@@ -26,7 +26,7 @@ def outlined(text,font,xy,fill,stroke=14,scol='white',shadow=True,angle=0):
     t.text((40,60),text,font=font,fill=fill,stroke_width=stroke,stroke_fill=scol)
     tmp=tmp.crop(tmp.getbbox()).rotate(angle,expand=True,resample=Image.BICUBIC)
     can.alpha_composite(tmp,xy); return tmp.size
-en=ImageFont.truetype(F+'PlayfairDisplay-Italic.ttf',190)
+en=ImageFont.truetype(F+'DancingScript-Bold.ttf',200)
 T1=sys.argv[3] if len(sys.argv)>3 else 'Sample'
 T2=sys.argv[4] if len(sys.argv)>4 else 'Title!'
 outlined(T1,en,(90,170),'#F7E36B',angle=6)
@@ -53,7 +53,7 @@ d.text((W//2-230,y),'ซับภาษาไทย',font=sub,fill='white',ancho
 d.text((W//2+125,y),'คำเด่น',font=sub,fill='#FF7DB5',anchor='lm',stroke_width=7,stroke_fill='#3A2030')
 d.text((W//2,y+80),'english subtitle',font=sub2,fill='white',anchor='mm',stroke_width=5,stroke_fill='#3A2030')
 # note bubble
-nf=ImageFont.truetype(F+'Itim-Regular.ttf',40)
+nf=ImageFont.truetype(F+'Mali-Bold.ttf',40)
 d.rounded_rectangle([640,1430,1000,1510],radius=40,fill='white',outline='#3A2030',width=3)
 d.text((820,1470),'* โน้ตสั้น ๆ',font=nf,fill='#3A2030',anchor='mm')
 can.convert('RGB').save(sys.argv[2],quality=92)
