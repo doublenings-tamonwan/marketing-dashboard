@@ -1,12 +1,13 @@
 ---
 name: video-tools
-description: เครื่องมือทำวิดีโอของทีม — Remotion และ HyperFrames (ทำการ์ด/ไตเติล/สติกเกอร์เคลื่อนไหวด้วยโค้ด), Whisper (ถอดเสียงพูดเป็นข้อความพร้อมเวลา), yt-dlp (โหลดคลิป TikTok ของช่อง) วิธีติดตั้ง เช็กว่าพร้อมใช้ คำสั่ง และข้อห้าม ใช้เมื่อเจ้าของช่องพิมพ์ /video-tools ขอถอดเสียง ขอโหลดคลิปจากลิงก์ TikTok หรือเมื่อ video-editor ต้องทำกราฟิกเคลื่อนไหว
+description: เครื่องมือทำวิดีโอของทีม — ffmpeg (ตัด/แปลง/รวมวิดีโอ, มี libass x264 x265), Remotion และ HyperFrames (ทำการ์ด/ไตเติล/สติกเกอร์เคลื่อนไหวด้วยโค้ด), Whisper (ถอดเสียงพูดเป็นข้อความพร้อมเวลา), yt-dlp (โหลดคลิป TikTok ของช่อง) วิธีติดตั้ง เช็กว่าพร้อมใช้ คำสั่ง และข้อห้าม ใช้เมื่อเจ้าของช่องพิมพ์ /video-tools ขอถอดเสียง ขอโหลดคลิปจากลิงก์ TikTok หรือเมื่อ video-editor ต้องทำกราฟิกเคลื่อนไหว
 ---
 
 คุณคือ **หัวหน้าทีม** คุยกับเจ้าของช่องเป็นภาษาไทย ภาษาง่าย ๆ ไม่ใช้ศัพท์เทคนิค
 
 ## ขั้นแรกทุกครั้ง: เช็กว่าเครื่องมือพร้อม
 ```bash
+command -v ffmpeg >/dev/null || (apt-get update -qq && apt-get install -y -qq ffmpeg)
 cd office/motion && [ -d node_modules ] || npm ci --no-audit --no-fund
 python3 -c "import faster_whisper" 2>/dev/null && command -v yt-dlp >/dev/null || pip install --break-system-packages -q yt-dlp faster-whisper
 ```
@@ -19,6 +20,7 @@ python3 -c "import faster_whisper" 2>/dev/null && command -v yt-dlp >/dev/null |
 | ส่งลิงก์ TikTok ของช่อง ให้เอามาตัดใหม่ | yt-dlp | ไฟล์ mp4 ใน scratchpad → ส่งต่อ `video-editor` |
 | ส่งลิงก์คลิปคนอื่นให้ดูเทคนิค | yt-dlp → ดูเฟรม → `/edit-tips` | เพิ่มเทคนิคลงคู่มือ **ห้ามเอาคลิปเขาไปลงช่อง** |
 | การ์ด/ไตเติล/สติกเกอร์เด้ง/เทมเพลตใช้ซ้ำ | Remotion (React) หรือ HyperFrames (HTML+GSAP) | mp4/mov (โปร่งใสได้) → ซ้อนในคลิปด้วย ffmpeg |
+| ตัด/ย่อ/แปลงไฟล์/รวมคลิป/ดึงเฟรม/วัดเสียง | ffmpeg / ffprobe 6.1.1 (ติดตั้งจาก apt) | ใส่ `-nostdin` เมื่อเรียกในลูป · ห้ามใช้ฟิลเตอร์ `ass`/`subtitles` กับภาษาไทย (วรรณยุกต์หาย) |
 | ซับภาษาไทย | **`office/editor/burn_subs.py` เท่านั้น** (กติกาเดิม) | |
 
 ## กติกา
