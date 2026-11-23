@@ -212,16 +212,15 @@ def shots():
     S = []
     # rapid open: 5 x 5 frames
     S.append(("m1", lambda: still_shot("c7db42e2", 5, (700, 750, 620), (1008, 1336), 1.0, 0.3), FOOD))
-    S.append(("m2", lambda: still_shot("854b721a", 5, (600, 560, 620), (907, 1058), 1.0, 0.3), FOOD))
-    S.append(("m3", lambda: still_shot("ceae1e7c", 5, (625, 980, 290), (781, 1238), 1.0, 0.3), FOOD))
+    S.append(("m2", lambda: still_shot("854b721a", 4, (600, 560, 620), (907, 1058), 1.0, 0.3), FOOD))
+    S.append(("m3", lambda: still_shot("ceae1e7c", 5, (184, 280, 976), (689, 1176), 1.0, 0.0), FOOD))
 
     def m4():
         f = video_frames("0718ff68-IMG_7392", 0.3, 1)[0]
-        return [view(f, (130, 0, 760), 1.0 + 0.06 * i / 5, (510, 600)) for i in range(5)]
+        return [view(f, (130, 0, 760), 1.0 + 0.06 * i / 5, (510, 600)) for i in range(4)]
     S.append(("m4", m4, PEOPLE))
-    S.append(("m5", lambda: still_shot("7ce4021c", 5, (690, 740, 730), (1052, 1170), 1.0, 0.3), PEOPLE))
     # yukke hero: 47 frames, punch at 0.3s, slow push after
-    S.append(("yukke", lambda: still_shot("7e14678d", 47, (193, 148, 1050), (718, 1046), 1.0, 0.07, (0.3, 0.2)), FOOD))
+    S.append(("yukke", lambda: still_shot("7e14678d", 54, (193, 148, 1050), (718, 1046), 1.0, 0.07, (0.3, 0.2)), FOOD))
     # sashimi close: slow push to salmon
     S.append(("sashimi", lambda: still_shot("c7db42e2", 45, (164, 0, 1134), (1008, 1300), 1.0, 0.07), FOOD))
     # yum close: slow drift (pan)
@@ -230,7 +229,7 @@ def shots():
         return [view(src, (150 + 3 * i, 0, 1134), 1.04, (756 + 3 * i, 1058)) for i in range(45)]
     S.append(("yum", yum, FOOD))
     # skewers: meat only, punch 15% at 0.5s
-    S.append(("skewer", lambda: still_shot("ceae1e7c", 45, (597, 916, 344), (781, 1220), 1.0, 0.0, (0.5, 0.15)), FOOD))
+    S.append(("skewer", lambda: still_shot("ceae1e7c", 45, (184, 280, 976), (689, 1176), 1.0, 0.0), FOOD))
 
     # chef counter 7383 0.0-1.5, crop away bottles, blur chef faces
     def chef():

@@ -1,0 +1,8 @@
+[
+ {"start": 2.4, "end": 3.9, "text": "ซาชิมิชิ้น[หนา]", "en": "fresh & {thick}", "pos": "top"},
+ {"start": 3.9, "end": 5.4, "text": "ยำปลาดิบผัก[สดชื่น]", "en": "so {fresh}", "pos": "top"},
+ {"start": 5.4, "end": 6.9, "text": "เนื้อย่างหอม[ฉ่ำ]", "en": "{juicy} skewers", "pos": "top"},
+ {"start": 6.9, "end": 8.4, "text": "นั่งดูเชฟทำ[สด ๆ]", "en": "{fresh} from the chef", "pos": "top"},
+ {"start": 8.4, "end": 9.9, "text": "เหมือนหลุดไป[ญี่ปุ่น]", "en": "feels like {Japan}", "y": 1150},
+ {"start": 9.9, "end": 11.4, "text": "พาเพื่อนมา[ฟิน]ทั้งโต๊ะ", "en": "with my {bestie}"}
+]
