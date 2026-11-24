@@ -22,6 +22,7 @@ python3 -c "import faster_whisper, rembg" 2>/dev/null && command -v yt-dlp >/dev
 | การ์ด/ไตเติล/สติกเกอร์เด้ง/เทมเพลตใช้ซ้ำ | Remotion (React) หรือ HyperFrames (HTML+GSAP) | mp4/mov (โปร่งใสได้) → ซ้อนในคลิปด้วย ffmpeg |
 | ตัด/ย่อ/แปลงไฟล์/รวมคลิป/ดึงเฟรม/วัดเสียง | ffmpeg / ffprobe 6.1.1 (ติดตั้งจาก apt) | ใส่ `-nostdin` เมื่อเรียกในลูป · ห้ามใช้ฟิลเตอร์ `ass`/`subtitles` กับภาษาไทย (วรรณยุกต์หาย) |
 | ลบพื้นหลัง / ไดคัตคน / ทำสติกเกอร์หัวคน (สไตล์ D) | rembg → `office/editor/cutout.py` | PNG โปร่งใส · `--box x,y,w,h` เลือกคน/หัว · `--main` เก็บคนกลางกรอบ · `--sticker` ขอบขาว+เงา · `--model birefnet-portrait` (สวยสุด ~30 วิ/ภาพ) หรือ `u2net_human_seg` (~5 วิ) หรือ `isnet-general-use` (สินค้า/ของ) |
+| เสียงพากย์ AI ภาษาไทย (เมื่อเจ้าของช่องขอเท่านั้น) | edge-tts (`pip install edge-tts`) เสียง `th-TH-PremwadeeNeural` (หญิง) / `th-TH-NiwatNeural` (ชาย) | ต้องใส่ `SSL_CERT_FILE=/root/.ccr/ca-bundle.crt` + `--proxy "$HTTPS_PROXY"` · บริการล้มบ่อย → วนลองใหม่ทีละท่อน · "EP.2" ให้เขียน "อีพีสอง" · **ห้ามเลียนเสียงเจ้าของช่อง** · โพสต์ต้องเปิดป้าย AI |
 | ซับภาษาไทย | **`office/editor/burn_subs.py` เท่านั้น** (กติกาเดิม) | |
 
 ## กติกา
