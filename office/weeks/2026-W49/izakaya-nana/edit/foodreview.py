@@ -91,15 +91,12 @@ def hook_layers():
     p = layer()
     pill(p, W // 2, 1370, "ปากน้ำ · สมุทรปราการ", font("Kanit-SemiBold.ttf", 46), "white", INK, h=86)
     L.append((p, 0.12))
-    q = layer()
-    pill(q, W // 2, 1478, "4 เมนูต้องสั่ง!", font("Kanit-SemiBold.ttf", 44), PINK, "white", padx=35, h=76)
-    L.append((q, 0.2))
     return L
 
 
 def menu_layer(num, en, th):
     c = layer()
-    txt(c, (70, 300), f"{num} {en}", font("Fraunces-SemiBoldItalic.ttf", 104), CREAM, anchor="ls")
+    txt(c, (70, 300), en, font("Fraunces-SemiBoldItalic.ttf", 104), CREAM, anchor="ls")
     pill(c, 74, 335, th, font("Kanit-Medium.ttf", 46), "white", INK, padx=36, h=82, anchor_left=True)
     return c
 
@@ -125,25 +122,26 @@ def card_layers():
     pill(p, W // 2, 680, "ปากน้ำ · สมุทรปราการ", font("Kanit-SemiBold.ttf", 46), "white", INK, h=86)
     L.append((p, 0.12))
     m = layer()
-    txt(m, (W // 2, 840), "4 เมนูต้องสั่ง", font("Kanit-SemiBold.ttf", 58), PINK)
+    txt(m, (W // 2, 835), "ที่เราสั่งวันนี้", font("Kanit-SemiBold.ttf", 58), PINK)
     fi = font("Kanit-Regular.ttf", 50)
     items = ["ยุคเกะไข่แดง", "ซาชิมิรวม", "ยำปลาไทยซีฟู้ดวาซาบิ", "วากิวย่าง"]
-    left = W // 2 - 260
     for k, it in enumerate(items):
-        y = 930 + k * 66
-        txt(m, (left, y), f"0{k + 1}", font("Fraunces-SemiBoldItalic.ttf", 50), CREAM, anchor="lm")
-        txt(m, (left + 80, y), it, fi, "white", anchor="lm")
+        txt(m, (W // 2, 918 + k * 58), "· " + it, fi, "white")
+    txt(m, (W // 2, 1176), "ร้านยังมีเมนูอีกเยอะ", font("Kanit-Regular.ttf", 40), "#FFF4E0")
     L.append((m, 0.28))
     return L
 
 
 def main(inp, out):
-    T_CARD = 11.9
+    T_CARD = 11.8
     top_grad = gradient(150, 760)
     menu_grad = gradient(120, 620)
-    els = [El(img, t0, 2.3) for img, t0 in hook_layers()]
-    menus = [("01", "Yukhoe", "ยุคเกะไข่แดง", 2.3, 4.3), ("02", "Sashimi", "ซาชิมิรวม", 5.5, 7.0),
-             ("03", "Seafood Salad", "ยำปลาไทยซีฟู้ดวาซาบิ", 7.0, 8.5), ("04", "Wagyu", "วากิวย่าง", 8.5, 10.0)]
+    els = [El(img, t0, 1.5) for img, t0 in hook_layers()]
+    q = layer()
+    pill(q, W // 2, 1250, "วันนี้ขอสายปลาดิบ!", font("Kanit-SemiBold.ttf", 52), PINK, "white", padx=40, h=88)
+    els.append(El(q, 2.6, 3.7))
+    menus = [("01", "Yukhoe", "ยุคเกะไข่แดง", 3.7, 5.7), ("02", "Sashimi", "ซาชิมิรวม", 6.9, 8.2),
+             ("03", "Seafood Salad", "ยำปลาไทยซีฟู้ดวาซาบิ", 8.2, 9.5), ("04", "Wagyu", "วากิวย่าง", 9.5, 10.8)]
     for num, en, th, a, b in menus:
         els.append(El(menu_layer(num, en, th), a, b))
     cbg = card_bg()
@@ -165,7 +163,7 @@ def main(inp, out):
                 e.draw(fr, t)
         else:
             fr = Image.frombuffer("RGB", (W, H), b).convert("RGBA")
-            if t < 2.3:
+            if t < 1.5:
                 fr.alpha_composite(top_grad)
             elif any(a <= t < bb for *_, a, bb in menus):
                 fr.alpha_composite(menu_grad)
