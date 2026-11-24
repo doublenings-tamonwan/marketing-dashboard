@@ -34,7 +34,7 @@ def make(photo, out, yc=0.5, xc=0.5, py=915):
     ImageDraw.Draw(c).rounded_rectangle([W//2-bw/2,py,W//2+bw/2,py+90],radius=45,fill='white')
     ImageDraw.Draw(c).text((W//2,py+45),t,font=pf,fill='#2A1A14',anchor='mm')
     # small tag
-    sf=ImageFont.truetype(F+'Kanit-SemiBold.ttf',44); t2='4 เมนูต้องสั่ง!'
+    sf=ImageFont.truetype(F+'Kanit-SemiBold.ttf',44); t2='วันนี้ขอสายปลาดิบ!'
     bw=ImageDraw.Draw(c).textlength(t2,font=sf)+70
     ImageDraw.Draw(c).rounded_rectangle([W//2-bw/2,py+115,W//2+bw/2,py+190],radius=38,fill='#FF8FB8')
     ImageDraw.Draw(c).text((W//2,py+152),t2,font=sf,fill='white',anchor='mm')
