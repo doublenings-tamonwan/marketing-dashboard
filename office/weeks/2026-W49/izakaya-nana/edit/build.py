@@ -245,7 +245,13 @@ def shots():
     S.append(("lift", lambda: vframes(DRIVE, 19.9, 24, 1.0), NONE))
     # reaction 24.0-25.2, blur background diners (right/top area behind friend)
     def react():
-        return [blur_ellipses(blur_rect(f, (790, 0, 1080, 700)), [(742, 320, 72, 105)]) for f in vframes(DRIVE, 24.0, 36, 1.0)]
+        man = [(0, (745, 375)), (7, (748, 373)), (14, (743, 370)), (21, (738, 357)), (28, (733, 342)), (35, (728, 326))]
+        bun = [(0, (864, 375)), (7, (827, 375)), (14, (822, 375)), (21, (833, 359)), (28, (828, 343)), (35, (807, 343))]
+        out = []
+        for i, f in enumerate(vframes(DRIVE, 24.0, 36, 1.0)):  # full frame, no crop/zoom
+            m, b = lerp_keys(man, i), lerp_keys(bun, i)
+            out.append(blur_ellipses(f, [(m[0], m[1], 64, 92), (b[0], b[1], 80, 95)], r=30))
+        return out
     S.append(("react", react, NONE))
     # #2 sashimi slow zoom
     S.append(("sashimi", lambda: still_shot("c7db42e2", 45, (164, 0, 1134), (1008, 1300), 1.0, 0.047), NONE))
