@@ -53,4 +53,4 @@ def make(photo, out, yc=0.5, xc=0.5, py=915, stickers=False):
     h=int(W*4/3); y0=(H-h)//2
     c.convert('RGB').crop((0,y0,W,y0+h)).save(out.replace('.jpg','-3x4.jpg'),quality=85)
 make('7e14678d-image.jpg', sys.argv[1]+'/coverA-yukhoe.jpg', yc=0.15, py=1440)
-make('7fa7d651-image.jpg', sys.argv[1]+'/coverA-table.jpg', yc=0.35, stickers=True)
+make('7fa7d651-image.jpg', sys.argv[1]+'/coverA-table.jpg', yc=0.35, stickers=False)
