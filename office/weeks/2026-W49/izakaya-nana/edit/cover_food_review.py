@@ -17,9 +17,9 @@ def make(photo, out, yc=0.5, xc=0.5, py=915):
             l=Image.new('RGBA',(W,H),(0,0,0,0)); ImageDraw.Draw(l).text((xy[0]+4,xy[1]+6),t,font=f,fill=(0,0,0,150),anchor=anchor,stroke_width=sw,stroke_fill=(0,0,0,150))
             c.alpha_composite(l.filter(ImageFilter.GaussianBlur(8)))
         ImageDraw.Draw(c).text(xy,t,font=f,fill=fill,anchor=anchor,stroke_width=sw,stroke_fill=sf)
-    th=ImageFont.truetype(F+'Kanit-Medium.ttf',46)
+    th=ImageFont.truetype(F+'Chonburi-Regular.ttf',46)
     txt((W//2,430),'พามารีวิว · ร้านญี่ปุ่นสไตล์อิซากายะ',th,'#FFF4E0')
-    fr=ImageFont.truetype(F+'Fraunces-SemiBoldItalic.ttf',190)
+    fr=ImageFont.truetype(F+'Fraunces-Bold.ttf',175)
     txt((W//2,600),'Izakaya',fr,'#F6E3A8')
     fr2=ImageFont.truetype(F+'Fraunces-Bold.ttf',200)
     txt((W//2,790),'NANA',fr2,'#F6E3A8')
@@ -29,12 +29,12 @@ def make(photo, out, yc=0.5, xc=0.5, py=915):
             a=k*math.pi/3; ImageDraw.Draw(c).line([(cx-r*math.cos(a),cy-r*math.sin(a)),(cx+r*math.cos(a),cy+r*math.sin(a))],fill=col,width=14)
     ast(905,545,34,'#FF8FB8'); ast(170,830,26,'#8FD3EA')
     # pill
-    pf=ImageFont.truetype(F+'Kanit-SemiBold.ttf',48); t='ปากน้ำ · สมุทรปราการ'
+    pf=ImageFont.truetype(F+'Chonburi-Regular.ttf',48); t='ปากน้ำ · สมุทรปราการ'
     bw=ImageDraw.Draw(c).textlength(t,font=pf)+90
     ImageDraw.Draw(c).rounded_rectangle([W//2-bw/2,py,W//2+bw/2,py+90],radius=45,fill='white')
     ImageDraw.Draw(c).text((W//2,py+45),t,font=pf,fill='#2A1A14',anchor='mm')
     # small tag
-    sf=ImageFont.truetype(F+'Kanit-SemiBold.ttf',44); t2='วันนี้ขอสายปลาดิบ!'
+    sf=ImageFont.truetype(F+'Chonburi-Regular.ttf',44); t2='วันนี้ขอสายปลาดิบ!'
     bw=ImageDraw.Draw(c).textlength(t2,font=sf)+70
     ImageDraw.Draw(c).rounded_rectangle([W//2-bw/2,py+115,W//2+bw/2,py+190],radius=38,fill='#FF8FB8')
     ImageDraw.Draw(c).text((W//2,py+152),t2,font=sf,fill='white',anchor='mm')
