@@ -78,7 +78,7 @@ class El:
 def hook_layers():
     L = []
     k = layer()
-    txt(k, (W // 2, 225), "พามารีวิว · ร้านญี่ปุ่นสไตล์อิซากายะ", font("Chonburi-Regular.ttf", 44), "#FFF4E0")
+    txt(k, (W // 2, 225), "พามารีวิว EP.2 · ร้านญี่ปุ่นสไตล์อิซากายะ", font("Chonburi-Regular.ttf", 44), "#FFF4E0")
     L.append((k, -0.12))
     t = layer()
     txt(t, (W // 2, 375), "Izakaya", font("Fraunces-Bold.ttf", 170), CREAM)
@@ -135,6 +135,39 @@ def card_layers():
     return L
 
 
+STK = "/home/user/marketing-dashboard/office/assets/stickers/food/"
+
+
+def sticker(name, w, angle):
+    im = Image.open(STK + name).convert("RGBA")
+    im = im.resize((w, int(im.height * w / im.width)), Image.LANCZOS).rotate(angle, expand=True, resample=Image.BICUBIC)
+    sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sh.paste((0, 0, 0, 90), mask=im.split()[3])
+    out = Image.new("RGBA", (im.width + 30, im.height + 30), (0, 0, 0, 0))
+    out.alpha_composite(sh.filter(ImageFilter.GaussianBlur(7)), (8, 12))
+    out.alpha_composite(im, (0, 0))
+    return out
+
+
+class Pop:
+    """sticker pop-in scale 0->110->100% in 0.2s, centred at (cx, cy)"""
+    def __init__(self, img, cx, cy, t0, t1):
+        self.img, self.cx, self.cy, self.t0, self.t1, self.cache = img, cx, cy, t0, t1, {}
+
+    def draw(self, fr, t):
+        if not (self.t0 <= t < self.t1):
+            return
+        u = t - self.t0
+        s = 1.0 if u >= 0.2 else (1.1 * u / 0.13 if u < 0.13 else 1.1 - 0.1 * (u - 0.13) / 0.07)
+        s = round(max(s, 0.02), 3)
+        im = self.img
+        if s != 1.0:
+            if s not in self.cache:
+                self.cache[s] = im.resize((max(1, int(im.width * s)), max(1, int(im.height * s))), Image.BICUBIC)
+            im = self.cache[s]
+        fr.alpha_composite(im, (int(self.cx - im.width / 2), int(self.cy - im.height / 2)))
+
+
 def main(inp, out):
     T_CARD = 12.9
     top_grad = gradient(150, 760)
@@ -144,8 +177,12 @@ def main(inp, out):
              ("03", "Seafood Salad", "ยำปลาไทยซีฟู้ดวาซาบิ", 9.1, 10.5), ("04", "Wagyu", "วากิวย่าง", 10.5, 11.9)]
     for num, en, th, a, b in menus:
         els.append(El(menu_layer(num, en, th), a, b))
+    els.append(Pop(sticker("salmon-izakaya-nana.png", 280, -8), 905, 470, 7.95, 9.1))
+    els.append(Pop(sticker("wagyu-skewer-izakaya-nana.png", 230, 8), 925, 440, 10.75, 11.9))
     cbg = card_bg()
     cels = [El(img, T_CARD + t0, 99) for img, t0 in card_layers()]
+    cels.append(Pop(sticker("salmon-izakaya-nana.png", 230, -8), 200, 1640, T_CARD + 0.5, 99))
+    cels.append(Pop(sticker("wagyu-skewer-izakaya-nana.png", 190, 8), 880, 1630, T_CARD + 0.6, 99))
     dec = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-i", inp, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                            stdout=subprocess.PIPE)
     enc = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
