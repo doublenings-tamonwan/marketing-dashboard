@@ -151,6 +151,7 @@ def polaroid(photo, angle):
 
 
 def grade_photo(im):
+    return im  # owner: no colour filters (2026-11-23)
     im = ImageEnhance.Color(im).enhance(1.15)
     im = ImageEnhance.Contrast(im).enhance(1.04)
     a = np.asarray(im).astype(np.float32)
@@ -195,37 +196,60 @@ class El:
         frame.alpha_composite(im, (int(self.cx - im.width / 2), int(self.cy - im.height / 2)))
 
 
+def badge(num, color):
+    r = 95
+    s = (r * 2 + 30) * 4
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    c = s / 2
+    d.ellipse([c - r * 4 - 28, c - r * 4 - 28, c + r * 4 + 28, c + r * 4 + 28], fill="white")
+    d.ellipse([c - r * 4, c - r * 4, c + r * 4, c + r * 4], fill=color, outline=DARK, width=14)
+    d.text((c, c + 20), str(num), font=font("Kanit-Bold.ttf", int(r * 5.2)), fill="white", anchor="mm",
+           stroke_width=26, stroke_fill=DARK)
+    im = im.resize((s // 4, s // 4), Image.LANCZOS)
+    out = Image.new("RGBA", (im.width + 20, im.height + 20), (0, 0, 0, 0))
+    sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sh.paste((0, 0, 0, 70), mask=im.split()[3])
+    out.alpha_composite(sh.filter(ImageFilter.GaussianBlur(6)), (8, 12))
+    out.alpha_composite(im, (0, 0))
+    return out.rotate(-6, expand=True, resample=Image.BICUBIC)
+
+
 def build_els():
     E = []
-    ds = font("DancingScript-Bold.ttf", 172)
-    # hook: label from frame 0, title pops with yukke at 0.6
-    E.append(El(mint_label("พามารีวิว", 84), 300, 615, 0.0, 2.4))
-    E.append(El(outlined("Izakaya", ds, YEL, angle=6), 450, 232, 0.6, 2.4))
-    E.append(El(outlined("NANA", ds, BLU, angle=6), 715, 385, 0.65, 2.4))
-    E.append(El(asterisk(30, YEL), 975, 205, 0.7, 2.4))
-    E.append(El(star5(30, BLU, 10), 95, 420, 0.7, 2.4))
-    E.append(El(bubble("น่ากินทุกจาน!", 54, -6, "left"), 812, 590, 0.8, 2.4))
-    E.append(El(sticker("reaction-wow.png", 300, -6), 185, 1590, 1.05, 2.4))
-    E.append(El(note(["* ต้องสั่ง!"], 44, 4), 770, 1650, 1.5, 2.4))
-    # menu notes
-    E.append(El(note(["* แซลมอนสดมาก"], 42, -3), 760, 575, 2.7, 3.9))
-    E.append(El(star5(22, YEL, 5), 1000, 530, 2.75, 3.9))
-    E.append(El(note(["* ผักเยอะมาก"], 42, 3), 300, 585, 4.2, 5.4))
-    E.append(El(asterisk(20, BLU), 520, 540, 4.25, 5.4))
-    E.append(El(sticker("reaction-yes.png", 280, 5), 175, 1610, 4.4, 5.4))
-    E.append(El(note(["* งาเต็มไม้"], 42, -3), 235, 575, 5.7, 6.9))
-    E.append(El(star5(22, "#F7B7CF", 0), 440, 520, 5.75, 6.9))
-    E.append(El(asterisk(18, YEL), 960, 560, 7.1, 8.4))
+    ds = font("DancingScript-Bold.ttf", 165)
+    # hook over yolk pierce (0-1.5) + top view (1.5-2.3); keep yolk area (y~650-1200) clear
+    E.append(El(outlined("Izakaya", ds, YEL, angle=6), 430, 205, -0.08, 2.3))
+    E.append(El(outlined("NANA", ds, BLU, angle=6), 690, 355, -0.03, 2.3))
+    E.append(El(bubble("ปากน้ำ", 50, -8, "left"), 905, 520, 0.15, 2.3))
+    E.append(El(mint_label("4 เมนูต้องสั่ง!", 96, 4), 540, 1430, 0.0, 2.3))
+    E.append(El(asterisk(30, YEL), 975, 175, 0.1, 2.3))
+    E.append(El(star5(30, BLU, 10), 95, 390, 0.1, 2.3))
+    # #1 yukke 2.3-4.3
+    E.append(El(badge(1, "#FFB3D1"), 150, 640, 2.3, 4.3))
+    # reaction 4.3-5.5: no sticker
+    # #2 sashimi 5.5-7.0
+    E.append(El(badge(2, "#A8E0F0"), 150, 640, 5.5, 7.0))
+    E.append(El(star5(22, YEL, 5), 1000, 560, 5.55, 7.0))
+    # #3 yum 7.0-8.5
+    E.append(El(badge(3, "#F9E58C"), 150, 640, 7.0, 8.5))
+    E.append(El(note(["* ซ่าวาซาบิ"], 42, 3), 760, 600, 7.3, 8.5))
+    # #4 wagyu 8.5-10.0
+    E.append(El(badge(4, "#C9F0EA"), 150, 640, 8.5, 10.0))
+    E.append(El(sticker("reaction-yes.png", 280, 5), 905, 1610, 8.8, 10.0))
     return E
 
 
 def card_layers():
     """end card 11.4-14.9 : (static bg, popping elements)"""
-    T = 11.4
+    T = 11.9
     bg = stripes(5)
     E = []
-    front = photo("7ce4021c", (526, 760, 1576, 2072), (560, 700))
-    E.append(El(polaroid(front, -5), 370, 1090, T + 0.03, 99))
+    front = photo("7ce4021c", (526, 760, 1576, 2072), (480, 600))
+    pol = polaroid(front, -5)
+    pcx = 40 + pol.width // 2
+    E.append(El(pol, pcx, 1090, T + 0.03, 99))
+    pol_right = 40 + pol.width - 30  # minus shadow margin
     ds = font("DancingScript-Bold.ttf", 175)
     E.append(El(outlined("Izakaya", ds, YEL, angle=6), 430, 235, T + 0.05, 99))
     E.append(El(outlined("NANA", ds, BLU, angle=6), 690, 395, T + 0.1, 99))
@@ -238,7 +262,11 @@ def card_layers():
     pd.rounded_rectangle([4, 4, pill.width - 4, 92], radius=44, fill="white", outline=DARK, width=4)
     pd.text((pill.width / 2, 50), txt, font=pf, fill=DARK, anchor="mm")
     E.append(El(pill, 540, 648, T + 0.25, 99))
-    E.append(El(note(["- ยุคเกะไข่แดง", "- ซาชิมิรวม", "- ยำปลาดิบ"], 44, 4, head="เมนูที่ต้องสั่ง"), 775, 1130, T + 0.4, 99))
+    mn = note(["1 ยุคเกะไข่แดง", "2 ซาชิมิรวม", "3 ยำปลาไทยซีฟู้ด", "   วาซาบิ", "4 วากิวย่าง"], 40, 3, head="4 เมนูต้องสั่ง")
+    mx0 = pol_right + 18
+    assert mx0 + mn.width <= W - 20, (mx0, mn.width)
+    print("menu note x", mx0, mx0 + mn.width, "polaroid right", pol_right)
+    E.append(El(mn, mx0 + mn.width // 2, 1130, T + 0.4, 99))
     E.append(El(asterisk(30, YEL), 975, 790, T + 0.45, 99))
     E.append(El(star5(26, BLU, 12), 90, 1440, T + 0.45, 99))
     E.append(El(sticker("reaction-save.png", 300, -6), 200, 1600, T + 0.55, 99))
@@ -287,7 +315,8 @@ def cover(out):
                         (bubble("ปากน้ำ", 58, -8, "left"), 870, 790),
                         (asterisk(34, YEL), 985, 330),
                         (asterisk(26, BLU), 95, 560),
-                        (star5(28, "#F7B7CF", 0), 990, 1530)]:
+                        (star5(28, "#F7B7CF", 0), 990, 1530),
+                        (mint_label("4 เมนูต้องสั่ง!", 88, -3), 540, 1540)]:
         bg.alpha_composite(img, (int(cx - img.width / 2), int(cy - img.height / 2)))
     bg.convert("RGB").save(out)
     bg.convert("RGB").crop((0, 240, 1080, 1680)).save(out.replace(".png", "-3x4-check.jpg"), quality=90)

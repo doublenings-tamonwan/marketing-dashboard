@@ -1,8 +1,9 @@
 [
- {"start": 2.4, "end": 3.9, "text": "ซาชิมิชิ้น[หนา]", "en": "fresh & {thick}", "pos": "top"},
- {"start": 3.9, "end": 5.4, "text": "ยำปลาดิบผัก[สดชื่น]", "en": "so {fresh}", "pos": "top"},
- {"start": 5.4, "end": 6.9, "text": "เนื้อย่างหอม[ฉ่ำ]", "en": "{juicy} skewers", "pos": "top"},
- {"start": 6.9, "end": 8.4, "text": "นั่งดูเชฟทำ[สด ๆ]", "en": "{fresh} from the chef", "pos": "top"},
- {"start": 8.4, "end": 9.9, "text": "เหมือนหลุดไป[ญี่ปุ่น]", "en": "feels like {Japan}", "y": 1150},
- {"start": 9.9, "end": 11.4, "text": "พาเพื่อนมา[ฟิน]ทั้งโต๊ะ", "en": "with my {bestie}"}
+ {"start": 2.3, "end": 4.3, "text": "ยุคเกะ[ไข่แดง]", "en": "{yukhoe} with egg yolk", "pos": "top"},
+ {"start": 4.3, "end": 5.5, "text": "ชิมแล้ว[ว้าว]!", "en": "{omg} so good", "y": 820},
+ {"start": 5.5, "end": 7.0, "text": "ซาชิมิชิ้น[หนา]", "en": "fresh & {thick}", "pos": "top"},
+ {"start": 7.0, "end": 8.5, "text": "ยำปลาไทยซีฟู้ด[วาซาบิ]", "en": "seafood {wasabi} salad", "pos": "top"},
+ {"start": 8.5, "end": 10.0, "text": "วากิว[ย่าง]", "en": "{wagyu} skewers", "pos": "top"},
+ {"start": 10.0, "end": 10.9, "text": "เหมือนหลุดไป[ญี่ปุ่น]", "en": "feels like {Japan}", "y": 1150},
+ {"start": 10.9, "end": 11.9, "text": "พาเพื่อนมา[ฟิน]ทั้งโต๊ะ", "en": "with my {bestie}"}
 ]

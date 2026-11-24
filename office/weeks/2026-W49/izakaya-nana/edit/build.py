@@ -17,6 +17,7 @@ os.makedirs(OUT, exist_ok=True)
 FOOD = ("curves=all='0/0.02 0.25/0.29 0.7/0.73 1/1',eq=contrast=1.05:saturation=1.07,"
         "vibrance=intensity=0.22,colorbalance=rs=0.02:bs=-0.025:rm=0.015:bm=-0.02,"
         "unsharp=5:5:0.75:5:5:0")
+NONE = ""
 PEOPLE = ("curves=all='0/0.02 0.25/0.29 0.7/0.72 1/1',eq=contrast=1.03:saturation=1.03,"
           "vibrance=intensity=0.08,unsharp=5:5:0.45:5:5:0")
 
@@ -208,50 +209,69 @@ def still_shot(name, n, box, focus, z0=1.0, slow=0.0, punch=None):
     return frames
 
 
-def shots():
-    S = []
-    # rapid open: 5 x 5 frames
-    S.append(("m1", lambda: still_shot("c7db42e2", 5, (700, 750, 620), (1008, 1336), 1.0, 0.3), FOOD))
-    S.append(("m2", lambda: still_shot("854b721a", 4, (600, 560, 620), (907, 1058), 1.0, 0.3), FOOD))
-    S.append(("m3", lambda: still_shot("ceae1e7c", 5, (184, 280, 976), (689, 1176), 1.0, 0.0), FOOD))
+DRIVE = "/tmp/claude-0/-home-user-marketing-dashboard/4c923d2c-8f5d-5971-8899-b8d14570e947/scratchpad/izakaya/drive/drive1.mov"
 
-    def m4():
-        f = video_frames("0718ff68-IMG_7392", 0.3, 1)[0]
-        return [view(f, (130, 0, 760), 1.0 + 0.06 * i / 5, (510, 600)) for i in range(4)]
-    S.append(("m4", m4, PEOPLE))
-    # yukke hero: 47 frames, punch at 0.3s, slow push after
-    S.append(("yukke", lambda: still_shot("7e14678d", 54, (193, 148, 1050), (718, 1046), 1.0, 0.07, (0.3, 0.2)), FOOD))
-    # sashimi close: slow push to salmon
-    S.append(("sashimi", lambda: still_shot("c7db42e2", 45, (164, 0, 1134), (1008, 1300), 1.0, 0.07), FOOD))
-    # yum close: slow drift (pan)
+
+def vframes(path, start, n, speed=1.0):
+    vf = (f"setpts=PTS/{speed}," if speed != 1.0 else "") + "fps=30"
+    p = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-ss", f"{start}", "-i", path,
+                        "-frames:v", str(n), "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                       capture_output=True, check=True)
+    a = np.frombuffer(p.stdout, np.uint8).reshape(-1, 1920, 1080, 3)
+    assert len(a) >= n, (path, len(a))
+    return [Image.fromarray(f) for f in a[:n]]
+
+
+def blur_rect(im, box, r=30):
+    bl = im.filter(ImageFilter.GaussianBlur(r))
+    m = Image.new("L", im.size, 0)
+    ImageDraw.Draw(m).rectangle(box, fill=255)
+    m = m.filter(ImageFilter.GaussianBlur(25))
+    return Image.composite(bl, im, m)
+
+
+def shots():
+    import scrap as SC
+    S = []
+    # 0-1.5 hook: chopsticks pierce yolk, 2x speed (src 4.6-7.6)
+    S.append(("yolk", lambda: vframes(DRIVE, 4.6, 45, 2.0), NONE))
+    # 1.5-2.3 top view 7385 slow pan
+    def top():
+        src = photo("7fa7d651")
+        return [view(src, (120 + 5 * i, 0, 1449), 1.0, (0, 0)) for i in range(24)]
+    S.append(("top", top, NONE))
+    # #1 yukke video: mix 15.3-17.1 @1.5x (1.2s) + lift 19.9-20.7 (0.8s)
+    S.append(("mix", lambda: vframes(DRIVE, 15.3, 36, 1.5), NONE))
+    S.append(("lift", lambda: vframes(DRIVE, 19.9, 24, 1.0), NONE))
+    # reaction 24.0-25.2, blur background diners (right/top area behind friend)
+    def react():
+        return [blur_ellipses(blur_rect(f, (790, 0, 1080, 700)), [(742, 320, 72, 105)]) for f in vframes(DRIVE, 24.0, 36, 1.0)]
+    S.append(("react", react, NONE))
+    # #2 sashimi slow zoom
+    S.append(("sashimi", lambda: still_shot("c7db42e2", 45, (164, 0, 1134), (1008, 1300), 1.0, 0.047), NONE))
+    # #3 yum drift
     def yum():
         src = photo("854b721a")
         return [view(src, (150 + 3 * i, 0, 1134), 1.04, (756 + 3 * i, 1058)) for i in range(45)]
-    S.append(("yum", yum, FOOD))
-    # skewers: meat only, punch 15% at 0.5s
-    S.append(("skewer", lambda: still_shot("ceae1e7c", 45, (184, 280, 976), (689, 1176), 1.0, 0.0), FOOD))
-
-    # chef counter 7383 0.0-1.5, crop away bottles, blur chef faces
-    def chef():
-        fr = video_frames("e2074a94-IMG_7383", 0.0, 45)
+    S.append(("yum", yum, NONE))
+    # #4 wagyu polaroid (wide, downscaled)
+    def wagyu():
+        bg = SC.stripes(13)
+        ph = SC.photo("ceae1e7c", (0, 280, 1512, 2016), (780, 895))
+        pol = SC.polaroid(ph, -3)
         out = []
-        for i, f in enumerate(fr):
-            t = i / FPS
-            c1 = lerp_keys([(0, (648, 985)), (0.75, (593, 962)), (1.45, (435, 985))], t)
-            c2 = lerp_keys([(0, (1035, 1022)), (0.75, (983, 1000)), (1.45, (788, 1007))], t)
-            f = blur_ellipses(f, [(c1[0], c1[1], 62, 74), (c2[0], c2[1], 62, 74)])
-            x0 = lerp_keys([(0, (390,)), (0.75, (320,)), (1.45, (160,))], t)[0]
-            out.append(view(f, (x0, 390, 520), 1.0, (0, 0)))
+        for i in range(45):
+            fr = bg.copy()
+            fr.alpha_composite(pol, (560 - pol.width // 2, 1185 - pol.height // 2 - i))
+            out.append(fr.convert("RGB"))
         return out
-    S.append(("chef", chef, PEOPLE))
-
+    S.append(("wagyu", wagyu, NONE))
     def lantern():
-        fr = video_frames("0718ff68-IMG_7392", 0.0, 45)
-        return [view(f, (40, 0, 1000), 1.0 + 0.04 * i / 45, (540, 700)) for i, f in enumerate(fr)]
-    S.append(("lantern", lantern, PEOPLE))
-
+        fr = video_frames("0718ff68-IMG_7392", 0.0, 27)
+        return [view(f, (40, 0, 1000), 1.0 + 0.04 * i / 27, (540, 700)) for i, f in enumerate(fr)]
+    S.append(("lantern", lantern, NONE))
     def friend():
-        fr = video_frames("75cb1a17-IMG_7381", 6.0, 45)
+        fr = video_frames("75cb1a17-IMG_7381", 6.0, 30)
         out = []
         for i, f in enumerate(fr):
             t = i / FPS
@@ -259,8 +279,8 @@ def shots():
             f = blur_ellipses(f, [(c[0], c[1] - 10, 105, 125)])
             out.append(view(f, (27, 0, 1026), 1.0, (540, 960)))
         return out
-    S.append(("friend", friend, PEOPLE))
-    S.append(("card", lambda: card_shot(105), PEOPLE))
+    S.append(("friend", friend, NONE))
+    S.append(("card", lambda: [Image.new("RGB", (W, H), (255, 244, 248))] * 90, NONE))
     return S
 
 
