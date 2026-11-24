@@ -91,6 +91,9 @@ def hook_layers():
     p = layer()
     pill(p, W // 2, 1370, "ปากน้ำ · สมุทรปราการ", font("Kanit-SemiBold.ttf", 46), "white", INK, h=86)
     L.append((p, 0.12))
+    q = layer()
+    pill(q, W // 2, 1478, "วันนี้ขอสายปลาดิบ!", font("Kanit-SemiBold.ttf", 44), PINK, "white", padx=35, h=76)
+    L.append((q, 0.2))
     return L
 
 
@@ -133,15 +136,12 @@ def card_layers():
 
 
 def main(inp, out):
-    T_CARD = 11.8
+    T_CARD = 12.9
     top_grad = gradient(150, 760)
     menu_grad = gradient(120, 620)
     els = [El(img, t0, 1.5) for img, t0 in hook_layers()]
-    q = layer()
-    pill(q, W // 2, 1250, "วันนี้ขอสายปลาดิบ!", font("Kanit-SemiBold.ttf", 52), PINK, "white", padx=40, h=88)
-    els.append(El(q, 2.6, 3.7))
-    menus = [("01", "Yukhoe", "ยุคเกะไข่แดง", 3.7, 5.7), ("02", "Sashimi", "ซาชิมิรวม", 6.9, 8.2),
-             ("03", "Seafood Salad", "ยำปลาไทยซีฟู้ดวาซาบิ", 8.2, 9.5), ("04", "Wagyu", "วากิวย่าง", 9.5, 10.8)]
+    menus = [("01", "Yukhoe", "ยุคเกะไข่แดง", 4.5, 6.5), ("02", "Sashimi", "ซาชิมิรวม", 7.7, 9.1),
+             ("03", "Seafood Salad", "ยำปลาไทยซีฟู้ดวาซาบิ", 9.1, 10.5), ("04", "Wagyu", "วากิวย่าง", 10.5, 11.9)]
     for num, en, th, a, b in menus:
         els.append(El(menu_layer(num, en, th), a, b))
     cbg = card_bg()
