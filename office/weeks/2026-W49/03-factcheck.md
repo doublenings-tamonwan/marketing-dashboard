@@ -22,12 +22,12 @@
 
 ---
 
-## คลิป 2: เมื่อวันพุธมาถึง แต่ The Remarried Empress ไม่มีตอนใหม่แล้ว — ✅ ผ่าน (มีเงื่อนไข)
+## คลิป 2: เมื่อวันพุธมาถึง แต่ The Remarried Empress ไม่มีตอนใหม่แล้ว — ✅ ผ่าน (ยืนยันตอนจบแล้ว 26 พ.ย.)
 
 | ประโยค | ผล | หลักฐาน / แหล่ง |
 |---|---|---|
 | "รอทุกพุธ" (ออกตอนใหม่ทุกวันพุธ สัปดาห์ละ 2 ตอน) | ✅ ถูก | ตอน 5–6 = 11 พ.ย. · 7–8 = 18 พ.ย. · 9–10 = 25 พ.ย. (ทุกวันพุธ) ([Filmibeat](https://filmibeat.com/korean/the-remarried-empress-episode-7-8-release-time-today-when-will-new-ep-premiere-available-in-india-538397.html) · [Interaksyon/Philstar](https://interaksyon.philstar.com/hobbies-interests/2026/11/03/321385/the-remarried-empress-drops-first-4-episodes-early-on-disney-philippines/)) · หมายเหตุ: 4 ตอนแรกออกเร็วกว่ากำหนด 1 วัน (อ. 3 พ.ย.) แต่หลังจากนั้นเป็นวันพุธทั้งหมด จึงพูดว่า "รอทุกพุธ" ได้ |
-| "The Remarried Empress จบแล้ว" (ตอนจบ 25 พ.ย.) | ⚠️ ยังยืนยันไม่ได้ | กำหนดการทุกแหล่งบอกตอนจบ (ตอน 10) ออก **พ. 25 พ.ย. 2026** ([Disney+ บทความทางการ](https://www.disneyplus.com/explore/articles/the-remarried-empress) · [What's On Disney Plus](https://whatsondisneyplus.com/the-remarried-empress-coming-soon-to-hulu-disney/)) แต่วันนี้ 23 พ.ย. **ยังไม่ออก** |
+| "The Remarried Empress จบแล้ว" (ตอนจบ 25 พ.ย.) | ✅ ถูก (ยืนยัน 26 พ.ย.) | กำหนดการทุกแหล่งบอกตอนจบ (ตอน 10) ออก **พ. 25 พ.ย. 2026** ([Disney+ บทความทางการ](https://www.disneyplus.com/explore/articles/the-remarried-empress) · [What's On Disney Plus](https://whatsondisneyplus.com/the-remarried-empress-coming-soon-to-hulu-disney/)) · **26 พ.ย.: ตอน 9–10 ออกแล้วจริงวันพุธ 25 พ.ย. จบซีซัน 1 (10 ตอน) ยังไม่ประกาศซีซัน 2** ([TV Insider](https://www.tvinsider.com/swooon/1314581/the-remarried-empress-finale-heinrey-proposes-navier-preview-video/) · [SBS Star](https://sbsstar.net/article/N1008862467/ju-jihoon-desperately-pleads-with-departing-shin-mina-as-the-remarried-empress-drops-finale-today) · [Topstarnews](https://global.topstarnews.net/en/articleView.html?idxno=16285956)) |
 | "เมื่อเปิด Disney+ วันพุธ" (ฮุกสำรอง) | ✅ ถูก | ฉายบน Disney+ (และ Hulu ในสหรัฐฯ) ([Disney+](https://www.disneyplus.com/explore/articles/the-remarried-empress)) |
 
 - ต้องแก้: ไม่มีข้อความต้องแก้ · **เงื่อนไข: หัวหน้าทีมต้องค้นเช็กหลัง 25 พ.ย. ว่าตอนจบออกจริง** (ใส่ป้าย `[เช็กหลัง 25 พ.ย.]` ไว้ในสคริปต์แล้ว) ถ้าเลื่อน → คลิปนี้ตกเป็น ❌ ห้ามเข้าแฟ้ม
@@ -78,7 +78,7 @@
 | คลิป | ผล | สิ่งที่ต้องทำ |
 |---|---|---|
 | 1 วันหยุด | ✏️ แก้แล้ว | ไม่มี (ข้อความเล็กท้ายคลิปแก้แล้ว) · ระวังโทนเรื่องวันพ่อ/ไม่แตะ 16 ธ.ค. |
-| 2 The Remarried Empress | ✅ มีเงื่อนไข | **ค้นเช็กหลัง 25 พ.ย. ว่าตอนจบออกจริง** ก่อนส่งแฟ้ม |
+| 2 The Remarried Empress | ✅ ผ่าน | ยืนยันแล้ว 26 พ.ย. ว่าตอนจบออก 25 พ.ย. |
 | 3 อิซากายะ | ✅ | – |
 | 4 Goblin vs ชีวิตเพื่อชาติ | ✅ | ปกห้ามใช้ชื่อไทยเต็มของ Goblin |
 | สำรอง โอโทชิ | ✏️ แก้แล้ว | – |
