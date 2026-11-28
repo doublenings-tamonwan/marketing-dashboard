@@ -14,6 +14,10 @@ subs.json: [{"start": 0.0, "end": 2.0, "text": "บรรทัดแรก\nบ
   Prompt Medium ตัวขาว เงาดำนุ่ม; ครอบคำสำคัญด้วย [วงเล็บเหลี่ยม] = แถบป้ายชมพู
   เช่น "เดินริมน้ำ…\n[ใจฟู]แบบงง ๆ" — ใช้ 1 คำต่อซับ
 --style cute = แบบเดิม (Itim ขอบชมพูหนา) — ห้ามใส่อีโมจิทั้งสองแบบ
+--style scrapbook (สไตล์ D, เพิ่ม 2026-11-23) = ซับ 2 ภาษาแบบภาพ ref 08:
+  ไทย Kanit Bold ขาวขอบเข้ม คำใน [ ] สีชมพู #FF7DB5 + บรรทัดอังกฤษ (key "en") ตัวเล็ก คำใน { } สีฟ้า #5BC0DE
+  เช่น {"start":0,"end":2,"text":"ซาชิมิชิ้น[หนา]","en":"fresh & {thick}","pos":"top"}
+  "pos": "top" | "mid" (กลางจอ) | ไม่ใส่ = ล่าง · ใส่ "y" เองได้เหมือนเดิม
 """
 import argparse
 import json
@@ -104,6 +108,57 @@ def render_cute(text, font_path, size, path):
     return tw, th
 
 
+SB_PINK = (255, 125, 181, 255)   # #FF7DB5 คำเด่นไทย
+SB_BLUE = (91, 192, 222, 255)    # #5BC0DE คำเด่นอังกฤษ
+SB_EDGE = (58, 32, 48, 255)      # #3A2030 ขอบเข้ม
+
+
+def render_scrapbook(text, en, font_path, size, path):
+    """สไตล์สแครปบุ๊ก (ภาพ 08): ไทยตัวหนาขาวขอบเข้ม คำใน [ ] สีชมพู
+    + บรรทัดอังกฤษตัวเล็กขาวขอบเข้ม คำใน { } สีฟ้า (ไม่มีแถบป้าย)"""
+    def parse(s, opener, closer):
+        pat = re.escape(opener) + r"[^" + re.escape(closer) + r"]+" + re.escape(closer)
+        return [[(seg[1:-1], True) if seg.startswith(opener) else (seg, False)
+                 for seg in re.split("(" + pat + ")", ln) if seg] for ln in s.split("\n")]
+
+    th_lines = parse(text, "[", "]") if text else []
+    en_lines = parse(en, "{", "}") if en else []
+    en_path = os.path.join(FONT_DIR, "Kanit-SemiBold.ttf")
+    while True:
+        fth = ImageFont.truetype(font_path, size, layout_engine=ImageFont.Layout.RAQM)
+        fen = ImageFont.truetype(en_path, int(size * 0.62), layout_engine=ImageFont.Layout.RAQM)
+        sw_th, sw_en = max(4, size // 10), max(3, size // 14)
+        rows = [(ln, fth, sw_th, SB_PINK) for ln in th_lines] + [(ln, fen, sw_en, SB_BLUE) for ln in en_lines]
+        widths = [sum(f.getlength(t) for t, _ in ln) + 2 * sw for ln, f, sw, _ in rows]
+        if max(widths) <= W - 2 * SIDE or size <= 44:
+            break
+        size -= 4
+    pad = 40
+    heights = []
+    for ln, f, sw, _ in rows:
+        asc, desc = f.getmetrics()
+        heights.append((asc, int((asc + desc) * (1.06 if f is fth else 1.12))))
+    tw = int(max(widths)) + 2 * pad
+    th = sum(h for _, h in heights) + 2 * pad
+    shadow = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
+    top = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
+    ds, dt = ImageDraw.Draw(shadow), ImageDraw.Draw(top)
+    y = pad
+    for (ln, f, sw, hi), lw, (asc, lh) in zip(rows, widths, heights):
+        x = (tw - lw) / 2 + sw
+        base = y + asc
+        for t, key in ln:
+            ds.text((x, base + 5), t, font=f, fill=(0, 0, 0, 120), anchor="ls",
+                    stroke_width=sw, stroke_fill=(0, 0, 0, 120))
+            dt.text((x, base), t, font=f, fill=hi if key else WHITE, anchor="ls",
+                    stroke_width=sw, stroke_fill=SB_EDGE)
+            x += f.getlength(t)
+        y += lh
+    out = Image.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(6)), top)
+    out.save(path)
+    return tw, th
+
+
 def _hex(h):
     h = h.strip().lstrip("#")
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
@@ -114,7 +169,7 @@ def main():
     ap.add_argument("--video", required=True)
     ap.add_argument("--subs", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--style", choices=["clean", "cute"], default="clean")
+    ap.add_argument("--style", choices=["clean", "cute", "scrapbook"], default="clean")
     ap.add_argument("--bottom", type=int, default=BOTTOM, help="ระยะจากขอบล่างถึงซับ (px) ค่าเริ่มต้น 520")
     ap.add_argument("--font", help="ค่าเริ่มต้น: clean=Prompt-Medium.ttf, cute=Itim-Regular.ttf")
     ap.add_argument("--pill", help="สีแถบป้ายคำสำคัญ 'พื้น,ตัวอักษร' เช่น FF6363,FFFFFF (ค่าเริ่มต้นชมพู FFD6E7,7A0E3B)")
@@ -128,8 +183,9 @@ def main():
         PILL_BG, PILL_FG = (_hex(c) for c in a.pill.split(","))
 
     clean = a.style == "clean"
-    a.font = a.font or ("Prompt-Medium.ttf" if clean else "Itim-Regular.ttf")
-    a.size = a.size or (74 if clean else 96)
+    scrap = a.style == "scrapbook"
+    a.font = a.font or ("Kanit-Bold.ttf" if scrap else "Prompt-Medium.ttf" if clean else "Itim-Regular.ttf")
+    a.size = a.size or (80 if scrap else 74 if clean else 96)
     render = render_clean if clean else render_cute
     font_path = a.font if os.path.isabs(a.font) else os.path.join(FONT_DIR, a.font)
     subs = json.load(open(a.subs, encoding="utf-8"))
@@ -139,7 +195,10 @@ def main():
     chain, last = [], "0:v"
     for i, s in enumerate(subs):
         png = os.path.join(tmp, f"s{i}.png")
-        tw, th = render(s["text"], font_path, s.get("size", a.size), png)
+        if scrap:
+            tw, th = render_scrapbook(s.get("text", ""), s.get("en", ""), font_path, s.get("size", a.size), png)
+        else:
+            tw, th = render(s["text"], font_path, s.get("size", a.size), png)
         dur = s["end"] - s["start"]
         cmd += ["-loop", "1", "-t", f"{dur:.3f}", "-i", png]
         st = s["start"]
@@ -150,6 +209,8 @@ def main():
         )
         if "y" in s:  # กำหนดตำแหน่งบนเองได้ (px จากขอบบน)
             base_y = int(s["y"])
+        elif scrap and s.get("pos") == "mid":
+            base_y = (H - th) // 2
         else:
             base_y = TOP if s.get("pos") == "top" else H - a.bottom - th
         y = f"{base_y}+max(0\\,(0.18-(t-{st:.3f}))*160)"  # ลอยขึ้นตอนเข้า
