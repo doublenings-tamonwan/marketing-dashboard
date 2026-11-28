@@ -2,7 +2,7 @@
 import sys, subprocess, numpy as np
 sys.path.insert(0, sys.path[0]); from fx import warm_face2 as warm_face, big_head
 from PIL import Image
-S = sys.argv[1]; OUT = sys.argv[2]; K = float(sys.argv[3]) if len(sys.argv) > 3 else 1.0; FPS = 30; W, H = 1080, 1920
+S = sys.argv[1]; OUT = sys.argv[2]; K = float(sys.argv[3]) if len(sys.argv) > 3 else 1.0; BLEND = '--blend' in sys.argv; FPS = 30; W, H = 1080, 1920
 N = 477
 # (out_start, out_end, src_start, src_end)
 SEG = [(0.0, 2.6, 0.0, 1.5), (2.6, 6.8, 1.5, 2.5), (6.8, 10.4, 2.5, 3.5), (10.4, 12.3, 3.5, 4.5),
@@ -18,11 +18,12 @@ def frame(i):
     i = int(min(max(i, 0), N - 1))
     if i not in cache:
         if len(cache) > 40: cache.pop(next(iter(cache)))
-        cache[i] = np.asarray(Image.open(f"{S}/src/{i+1:04d}.jpg").convert("RGB")).astype(np.float32)
+        cache[i] = np.asarray(Image.open(f"{S}/srcp/{i+1:04d}.png").convert("RGB")).astype(np.float32)
     return cache[i]
 def get(ts):
     x = ts * FPS - 0.5; i = np.floor(x); f = x - i
-    return Image.fromarray((frame(i) * (1 - f) + frame(i + 1) * f).astype(np.uint8))
+    if BLEND: return Image.fromarray((frame(i) * (1 - f) + frame(i + 1) * f).astype(np.uint8))
+    return Image.fromarray(frame(round(x)).astype(np.uint8))
 def ease(x): x = min(max(x, 0), 1); return x * x * (3 - 2 * x)
 def punch(t, at, amt, up=0.15, down=0.6):  # quick zoom in then ease back
     if t < at: return 0
@@ -31,14 +32,14 @@ def punch(t, at, amt, up=0.15, down=0.6):  # quick zoom in then ease back
 def zoom(img, z, c):
     if z <= 1.001: return img
     cw, ch = W / z, H / z; x = min(max(c[0] - cw / 2, 0), W - cw); y = min(max(c[1] - ch / 2, 0), H - ch)
-    return img.resize((W, H), Image.BICUBIC, box=(x, y, x + cw, y + ch))
+    return img.resize((W, H), Image.LANCZOS, box=(x, y, x + cw, y + ch))
 HEAD = [(6.5, (396, 396)), (6.7, (450, 396)), (6.9, (370, 380)), (7.1, (428, 396)), (7.3, (424, 390)), (7.5, (439, 390)), (7.7, (439, 380))]
 def head_c(s):
     for (a, p), (b, q) in zip(HEAD, HEAD[1:]):
         if s <= b: u = (s - a) / (b - a); return (p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u)
     return HEAD[-1][1]
 ff = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-                       "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", OUT], stdin=subprocess.PIPE)
+                       "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-profile:v", "high", "-vf", "unsharp=5:5:0.5:5:5:0", "-pix_fmt", "yuv420p", OUT], stdin=subprocess.PIPE)
 CS = 25.6 / K; NEWDUR = CS + 2.8 if K > 1 else DUR
 for k in range(int(NEWDUR * FPS)):
     tn = k / FPS; t = tn * K if tn < CS else 25.6 + (tn - CS) * 3.0 / (NEWDUR - CS); s, (a, b) = src_t(t); u = (t - a) / (b - a); img = get(s); z = 1.0; c = (W / 2, H / 2)
