@@ -1,8 +1,8 @@
 """Izakaya v5: retime 15.9s cut to owner's 28s voiceover + zooms, big head, warm faces."""
 import sys, subprocess, numpy as np
-sys.path.insert(0, sys.path[0]); from fx import warm_face, big_head
+sys.path.insert(0, sys.path[0]); from fx import warm_face2 as warm_face, big_head
 from PIL import Image
-S = sys.argv[1]; OUT = sys.argv[2]; FPS = 30; W, H = 1080, 1920
+S = sys.argv[1]; OUT = sys.argv[2]; K = float(sys.argv[3]) if len(sys.argv) > 3 else 1.0; FPS = 30; W, H = 1080, 1920
 N = 477
 # (out_start, out_end, src_start, src_end)
 SEG = [(0.0, 2.6, 0.0, 1.5), (2.6, 6.8, 1.5, 2.5), (6.8, 10.4, 2.5, 3.5), (10.4, 12.3, 3.5, 4.5),
@@ -39,8 +39,9 @@ def head_c(s):
     return HEAD[-1][1]
 ff = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                        "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", OUT], stdin=subprocess.PIPE)
-for k in range(int(DUR * FPS)):
-    t = k / FPS; s, (a, b) = src_t(t); u = (t - a) / (b - a); img = get(s); z = 1.0; c = (W / 2, H / 2)
+CS = 25.6 / K; NEWDUR = CS + 2.8 if K > 1 else DUR
+for k in range(int(NEWDUR * FPS)):
+    tn = k / FPS; t = tn * K if tn < CS else 25.6 + (tn - CS) * 3.0 / (NEWDUR - CS); s, (a, b) = src_t(t); u = (t - a) / (b - a); img = get(s); z = 1.0; c = (W / 2, H / 2)
     if a == 0.0:   z = 1 + punch(t, 0.8, 0.14, down=1.2) + 0.04 * ease(t / 2.6); c = (540, 950)       # yolk punch
     elif a == 2.6: z = 1.12 - 0.12 * ease(u / 0.06) + 0.10 * ease(u); c = (540, 900)                  # bounce in, slow push
     elif a == 6.8: z = 1.15 - 0.15 * ease(u)                                                          # zoom out

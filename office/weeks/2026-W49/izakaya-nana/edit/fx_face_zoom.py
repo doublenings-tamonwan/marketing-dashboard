@@ -27,3 +27,16 @@ def big_head(img,c,R,k):
 def zoom(img,z,c):
     w,h=img.size; cw,ch=w/z,h/z; x=min(max(c[0]-cw/2,0),w-cw); y=min(max(c[1]-ch/2,0),h-ch)
     return img.crop((x,y,x+cw,y+ch)).resize((w,h),Image.LANCZOS)
+
+def skin2(a):
+    r,g,b=a[...,0],a[...,1],a[...,2]; mx=a.max(-1); mn=a.min(-1)
+    s=(mx-mn)/(mx+1e-6); m=((r>=g*0.98)&(r>b)&(s>0.02)&(s<0.65)&(mx>0.22)).astype(float)
+    return np.array(Image.fromarray((m*255).astype('uint8')).filter(ImageFilter.GaussianBlur(8)))/255.
+def warm_face2(img,c,rx,ry,amt=1.0):
+    a=np.asarray(img.convert('RGB')).astype(float)/255; h,w,_=a.shape
+    m=np.clip(ell_mask(w,h,c,rx,ry)*skin2(a)*1.15,0,1)[...,None]*amt
+    b=np.clip(a**0.8,0,1)
+    b[...,0]*=1.10; b[...,1]*=1.025; b[...,2]*=0.86
+    gray=b.mean(-1,keepdims=True); b=gray+(b-gray)*1.4
+    o=a*(1-m)+np.clip(b,0,1)*m
+    return Image.fromarray((o*255).astype('uint8'))
